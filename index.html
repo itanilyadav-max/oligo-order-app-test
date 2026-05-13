@@ -1,0 +1,2132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<!-- Network Proxy Fix for all devices -->
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<link rel="preconnect" href="https://cdn.tailwindcss.com">
+<!-- Firebase Compat SDKs — Vodafone compatible, no ES modules -->
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+<!-- OneSignal SDK -->
+<script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+<script>
+  window.OneSignalDeferred = window.OneSignalDeferred || [];
+  OneSignalDeferred.push(async function(OneSignal) {
+    await OneSignal.init({
+      appId: "1e0a37ad-9f1d-4e25-a21d-ec03fe5799bb",
+      notifyButton: { enable: false },
+      allowLocalhostAsSecureOrigin: true,
+      serviceWorkerParam: { scope: "/" },
+      serviceWorkerPath: "OneSignalSDKWorker.js",
+    });
+    try {
+      const permission = OneSignal.Notifications.permission;
+      if (!permission) await OneSignal.Notifications.requestPermission();
+    } catch(e) { console.log('OneSignal permission:', e); }
+  });
+</script>
+<link rel="preconnect" href="https://cdnjs.cloudflare.com">
+<link rel="preconnect" href="https://www.gstatic.com">
+<title>Oligo - Fresh Microgreens</title>
+<!-- Load critical CSS first -->
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+    /* Base styles for all devices */
+    body { font-family: 'Poppins', sans-serif; padding-bottom: 90px; background-color: #f9fafb; -webkit-tap-highlight-color: transparent; margin: 0; }
+    #appLoader { position: fixed; inset: 0; background: white; z-index: 9000; display: flex; justify-content: center; align-items: center; flex-direction: column; }
+    .spinner { border: 4px solid #f3f3f3; border-top: 4px solid #10b981; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    .hide-scrollbar::-webkit-scrollbar { display: none; }
+    .nav-active { color: #10b981; }
+    .fade-in { animation: fadeIn 0.3s ease-in-out; }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    .cat-pill.active { background-color: #10b981; color: white !important; }
+    #toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 9999; padding: 12px 24px; border-radius: 99px; font-size: 13px; font-weight: 600; box-shadow: 0 10px 30px rgba(0,0,0,0.2); transition: all 0.3s; width: max-content; max-width: 90%; text-align: center; opacity: 0; pointer-events: none; }
+    #toast.show { opacity: 1; pointer-events: auto; }
+    /* Responsive card styles */
+    .modern-card { background: white; border-radius: 32px; border: 1px solid #f1f5f9; box-shadow: 0 4px 12px rgba(0,0,0,0.02); }
+    .product-card { transition: all 0.3s ease; border: 1px solid #f3f4f6; }
+    .product-card:hover { transform: translateY(-3px); box-shadow: 0 10px 20px rgba(0,0,0,0.05); }
+    .cat-pill { transition: all 0.2s ease; white-space: nowrap; border: 1px solid #e5e7eb; background: white; color: #6b7280; padding: 6px 16px; border-radius: 9999px; font-size: 13px; }
+    .status-badge { font-size: 10px; font-weight: 700; padding: 4px 12px; border-radius: 99px; text-transform: uppercase; }
+    /* Map link styles */
+    .map-link { display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; background: #eff6ff; border-radius: 50%; color: #2563eb; transition: all 0.2s; }
+    .map-link:hover { background: #dbeafe; transform: scale(1.1); }
+    .map-link:active { transform: scale(0.95); }
+    /* Delivery partner card */
+    .delivery-card { background: #f8fafc; border-radius: 20px; padding: 16px; margin-top: 16px; border: 1px solid #e2e8f0; }
+    /* Responsive fixes */
+    input, textarea, select, button { font-size: 16px !important; }
+    * { -webkit-tap-highlight-color: transparent; }
+    @media (max-width: 640px) {
+        .modern-card { padding: 16px; }
+        .product-card { flex-direction: column; text-align: center; }
+    }
+</style>
+</head>
+<body class="text-gray-800 select-none bg-gray-50">
+
+<!-- NOTIFICATION PERMISSION BANNER -->
+<div id="notifPermBanner" class="hidden fixed top-0 left-0 right-0 z-[9999] bg-green-600 text-white px-4 py-3 flex items-center justify-between gap-3 shadow-lg">
+    <div class="flex items-center gap-2 text-sm font-medium">
+        <i class="fas fa-bell text-lg"></i>
+        <span>Get order alerts on your phone — even when app is closed</span>
+    </div>
+    <div class="flex items-center gap-2 shrink-0">
+        <button onclick="window.requestNotifPermission()" class="bg-white text-green-700 font-bold text-xs px-3 py-1.5 rounded-full active:scale-95 transition">Allow</button>
+        <button onclick="document.getElementById('notifPermBanner').classList.add('hidden')" class="text-white/70 text-xl leading-none px-1">&times;</button>
+    </div>
+</div>
+
+<!-- APP LOADER -->
+<div id="appLoader">
+    <div class="spinner mb-4"></div>
+    <img src="image.png" alt="Oligo" class="h-24 object-contain" onerror="this.style.display='none'; document.getElementById('loaderText').classList.remove('hidden');">
+    <h2 id="loaderText" class="hidden text-green-600 font-bold text-2xl tracking-tighter">Oligo<span class="text-black">.</span></h2>
+    <div id="mobileErrorMessage" class="text-xs text-red-500 mt-4 hidden px-4 text-center"></div>
+</div>
+
+<!-- TOAST MESSAGE -->
+<div id="toast" class="bg-gray-900 text-white">Message here</div>
+
+<!-- AUTH SECTION -->
+<section id="authSection" class="min-h-screen flex flex-col justify-center items-center px-6 w-full">
+    <div class="w-full max-w-md">
+        <div class="text-center mb-8">
+            <img src="image.png" alt="Oligo" class="h-32 mx-auto object-contain" onerror="this.style.display='none'; document.getElementById('loginText').classList.remove('hidden');">
+            <h1 id="loginText" class="hidden text-4xl font-bold text-green-600 tracking-tighter">Oligo<span class="text-black">.</span></h1>
+            <p class="text-gray-500 text-sm mt-2">Fresh Microgreens Delivered</p>
+        </div>
+        
+        <div id="loginBox" class="w-full fade-in">
+            <form id="loginForm" class="space-y-4 p-8 bg-white rounded-[32px] shadow-xl border border-gray-100" novalidate>
+                <h2 class="text-xl font-bold">Welcome Back</h2>
+                <input type="email" id="loginEmail" placeholder="Email" class="w-full p-4 bg-gray-50 rounded-2xl outline-none ring-1 ring-gray-100 focus:ring-2 focus:ring-green-500" autocomplete="email">
+                <input type="password" id="loginPass" placeholder="Password" class="w-full p-4 bg-gray-50 rounded-2xl outline-none ring-1 ring-gray-100 focus:ring-2 focus:ring-green-500" autocomplete="current-password">
+                <button type="submit" id="loginSubmitBtn" class="w-full bg-green-600 text-white py-4 rounded-2xl font-bold shadow-lg active:scale-[0.98] transition">Login</button>
+                <div class="text-center pt-2">
+                    <button type="button" onclick="window.toggleRecovery(true)" class="text-xs font-bold text-gray-400 hover:text-green-600 transition">Forgot Password?</button>
+                </div>
+            </form>
+            <p class="text-center mt-6 text-sm text-gray-500">New to Oligo? <button type="button" onclick="window.toggleAuth(true)" class="text-green-600 font-bold">Create Account</button></p>
+        </div>
+
+        <div id="registerBox" class="w-full hidden fade-in">
+            <form id="registerForm" class="space-y-4 p-8 bg-white rounded-[32px] shadow-xl border border-gray-100" novalidate>
+                <h2 class="text-xl font-bold">Start Eating Fresh</h2>
+                <input type="text" id="regName" placeholder="Full Name" class="w-full p-4 bg-gray-50 rounded-2xl outline-none ring-1 ring-gray-100 focus:ring-2 focus:ring-green-500" autocomplete="name">
+                <input type="email" id="regEmail" placeholder="Email" class="w-full p-4 bg-gray-50 rounded-2xl outline-none ring-1 ring-gray-100 focus:ring-2 focus:ring-green-500" autocomplete="email">
+                <input type="tel" id="regPhone" placeholder="Phone (e.g. 9876543210)" class="w-full p-4 bg-gray-50 rounded-2xl outline-none ring-1 ring-gray-100 focus:ring-2 focus:ring-green-500" autocomplete="tel">
+                <input type="password" id="regPass" placeholder="Password (Min 6 chars)" class="w-full p-4 bg-gray-50 rounded-2xl outline-none ring-1 ring-gray-100 focus:ring-2 focus:ring-green-500" autocomplete="new-password">
+                <button type="submit" id="registerSubmitBtn" class="w-full bg-green-600 text-white py-4 rounded-2xl font-bold shadow-lg active:scale-[0.98] transition">Register</button>
+            </form>
+            <p class="text-center mt-6 text-sm text-gray-500">Already have an account? <button type="button" onclick="window.toggleAuth(false)" class="text-green-600 font-bold">Login</button></p>
+        </div>
+    </div>
+</section>
+
+<!-- RECOVERY MODAL -->
+<div id="recoveryModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden flex justify-center items-center px-6">
+    <div class="bg-white rounded-[32px] p-8 w-full max-w-sm shadow-2xl relative">
+        <button onclick="window.toggleRecovery(false)" class="absolute top-6 right-6 text-gray-400 hover:text-gray-800"><i class="fas fa-times text-xl"></i></button>
+        <h2 class="text-xl font-bold mb-1">Trouble Logging In?</h2>
+        <p class="text-gray-500 text-xs mb-6">Recover your account securely.</p>
+        <div>
+            <label class="text-[10px] font-bold text-gray-400 uppercase block mb-1">Registered Email</label>
+            <input type="email" id="recInputEmail" placeholder="Enter your email" class="w-full p-3 bg-gray-50 rounded-xl outline-none ring-1 ring-gray-100 focus:ring-2 focus:ring-green-500 text-sm mb-4">
+            <button onclick="window.sendResetLink()" class="w-full bg-green-600 text-white py-3 rounded-xl font-bold text-sm shadow-lg active:scale-95 transition">Send Reset Link</button>
+        </div>
+    </div>
+</div>
+
+<!-- MAIN APP -->
+<div id="mainApp" class="hidden">
+    <header class="bg-white/80 backdrop-blur-md sticky top-0 z-40 px-6 py-4 flex justify-between items-center border-b border-gray-100">
+        <div class="flex items-center gap-2">
+            <img src="image.png" alt="Oligo" class="h-16 object-contain" onerror="this.style.display='none'; document.getElementById('headerText').classList.remove('hidden');">
+            <h1 id="headerText" class="hidden font-bold text-2xl text-green-700 tracking-tight">Oligo</h1>
+            <span id="headerUserName" class="text-[10px] text-gray-400 font-medium ml-2"></span>
+        </div>
+        <div class="relative cursor-pointer bg-gray-100 w-10 h-10 flex items-center justify-center rounded-full active:bg-gray-200 transition" onclick="window.openCart()">
+            <i class="fas fa-shopping-bag text-xl text-gray-700"></i>
+            <span id="cartBadge" class="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] w-5 h-5 flex items-center justify-center rounded-full font-bold border-2 border-white hidden">0</span>
+        </div>
+    </header>
+
+    <main class="p-4 max-w-5xl mx-auto w-full">
+        <!-- HOME VIEW -->
+        <div id="viewHome" class="fade-in block">
+            <div id="holidayAlertBanner" class="hidden mb-6 p-4 rounded-2xl holiday-alert text-red-900 shadow-sm">
+                <div class="flex items-start gap-3">
+                    <i class="fas fa-calendar-times text-xl mt-1"></i>
+                    <div>
+                        <h3 class="font-bold text-sm uppercase tracking-wide">Holiday Alert</h3>
+                        <p id="holidayAlertMsg" class="text-xs mt-1 font-medium leading-relaxed"></p>
+                    </div>
+                </div>
+            </div>
+            <!-- 3-day upcoming holiday notice -->
+            <div id="upcomingHolidayBanner" class="hidden mb-6 p-4 rounded-2xl bg-amber-50 border border-amber-200 text-amber-900 shadow-sm">
+                <div class="flex items-start gap-3">
+                    <i class="fas fa-calendar-exclamation text-xl mt-1 text-amber-500"></i>
+                    <div>
+                        <h3 class="font-bold text-sm uppercase tracking-wide text-amber-700">Upcoming Holiday — Plan Ahead</h3>
+                        <div id="upcomingHolidayList" class="mt-1 space-y-1"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="mb-6">
+                <h2 class="font-bold text-2xl mb-1 tracking-tight">Healthy Choice</h2>
+                <p class="text-gray-500 text-sm">Locally grown nutrition.</p>
+            </div>
+            <div class="bg-gradient-to-br from-green-600 to-green-800 rounded-[32px] p-8 mb-8 text-white shadow-xl shadow-green-100">
+                <h3 class="text-2xl font-bold mb-2 tracking-tight">Nutrient-Packed</h3>
+                <p class="text-xs opacity-90 mb-6 max-w-[220px]">Up to 40x more nutrients than mature vegetables.</p>
+                <button onclick="document.getElementById('producersList').scrollIntoView({behavior: 'smooth'})" class="bg-white text-green-700 px-6 py-2 rounded-full text-xs font-bold shadow-md active:scale-90 transition">Explore Now</button>
+            </div>
+            <h3 class="font-bold text-lg mb-4 ml-1">Our Producers</h3>
+            <div id="producersList" class="space-y-4"></div>
+        </div>
+
+        <!-- MENU VIEW -->
+        <div id="viewMenu" class="fade-in hidden">
+            <button onclick="window.navTo('viewHome')" class="mb-4 text-sm text-gray-400 font-medium flex items-center hover:text-green-600 transition"><i class="fas fa-arrow-left mr-2"></i> Back</button>
+            <div class="mb-4 ml-1">
+                <h2 id="menuTitle" class="text-2xl font-bold text-gray-900">Farm Name</h2>
+                <p id="menuCuisine" class="text-sm text-gray-500">Pure Organic Harvest</p>
+            </div>
+            <div id="categoryBar" class="flex gap-2 overflow-x-auto hide-scrollbar pb-2 mb-4 sticky top-[72px] bg-[#f9fafb]/95 backdrop-blur-sm z-30 py-2"></div>
+            <div id="menuList" class="space-y-4"></div>
+        </div>
+
+        <!-- FARM VIEW -->
+        <div id="viewFarm" class="fade-in hidden">
+            <div class="mb-6">
+                <h2 class="font-bold text-2xl mb-1 tracking-tight flex items-center gap-2">
+                    <i class="fas fa-seedling text-green-600"></i> From Our Farm
+                </h2>
+                <p class="text-gray-500 text-sm">Live updates, photos & videos straight from our growing space.</p>
+            </div>
+            <div id="farmFeedContainer" class="space-y-5">
+                <div class="text-center py-12 text-gray-400">
+                    <div class="spinner" style="margin:0 auto 12px;"></div>
+                    <p class="text-sm">Loading farm updates...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ORDERS VIEW -->
+        <div id="viewOrders" class="fade-in hidden">
+            <h2 class="font-bold text-2xl mb-6 ml-1 tracking-tight">Your Orders</h2>
+            <div id="ordersList" class="space-y-6"></div>
+        </div>
+
+        <!-- PROFILE VIEW -->
+        <div id="viewProfile" class="fade-in hidden">
+            <div class="flex items-center gap-5 mb-8 ml-1">
+                <div class="w-16 h-16 bg-green-500 rounded-3xl flex items-center justify-center text-white shadow-lg shadow-green-200">
+                    <i class="fas fa-user text-2xl"></i>
+                </div>
+                <div>
+                    <h2 class="font-bold text-2xl text-gray-900 leading-tight" id="profTitleName">Loading Profile...</h2>
+                    <p class="text-[10px] font-bold text-green-500 uppercase tracking-widest">Account Verified</p>
+                </div>
+            </div>
+            <div class="space-y-6">
+                <div class="modern-card p-8">
+                    <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest block mb-8">Personal Details</span>
+                    <div class="space-y-8">
+                        <div>
+                            <span class="text-[10px] font-bold text-green-600 uppercase block mb-1">Full Name *</span>
+                            <input type="text" id="profName" class="w-full py-2 border-b border-gray-100 outline-none focus:border-green-500 transition text-sm font-medium bg-transparent">
+                        </div>
+                        <div>
+                            <span class="text-[10px] font-bold text-green-600 uppercase block mb-1">Phone Contact *</span>
+                            <input type="tel" id="profPhone" class="w-full py-2 border-b border-gray-100 outline-none focus:border-green-500 transition text-sm font-medium bg-transparent" placeholder="e.g. 9876543210">
+                        </div>
+                    </div>
+                    <button onclick="window.updateProfile()" class="mt-10 px-10 py-4 bg-gray-900 text-white rounded-2xl font-bold text-sm shadow-xl w-full sm:w-auto hover:bg-black transition">Save Changes</button>
+                </div>
+                <div class="modern-card p-8">
+                    <div class="flex justify-between items-center mb-6">
+                        <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Saved Addresses</span>
+                        <button onclick="window.openNewAddrForm()" class="text-green-600 font-bold flex items-center gap-2 bg-green-50 px-4 py-2 rounded-full text-xs hover:bg-green-100 transition"><i class="fas fa-plus"></i> Add New</button>
+                    </div>
+                    <div id="addrForm" class="hidden bg-gray-50 p-6 rounded-[24px] border border-dashed border-gray-200 mb-6 space-y-4">
+                        <input type="text" id="newJointName" placeholder="Restaurant or Joint Name * (e.g. Hyatt, Office)" class="w-full p-4 rounded-2xl border-none outline-none ring-1 ring-gray-200 text-sm focus:ring-2 focus:ring-green-500">
+                        <input type="text" id="newLocName" placeholder="Location/Area * (e.g. Andheri, BKC...)" class="w-full p-4 rounded-2xl border-none outline-none ring-1 ring-gray-200 text-sm focus:ring-2 focus:ring-green-500">
+                        <div class="relative">
+                            <textarea id="newFullAddr" oninput="window.addressSearch(this)" placeholder="Search or Enter Full Address * (e.g. Landmark, Wing, Floor...)" class="w-full p-4 rounded-2xl border-none outline-none ring-1 ring-gray-200 text-sm focus:ring-2 focus:ring-green-500" rows="3"></textarea>
+                            <div id="addrSearchList" class="absolute left-0 right-0 top-full bg-white border border-gray-200 rounded-2xl mt-2 shadow-xl z-50 hidden max-h-60 overflow-y-auto"></div>
+                        </div>
+                        <div class="flex gap-2">
+                            <button id="saveAddrBtn" onclick="window.saveNewAddress()" class="flex-1 bg-green-600 text-white py-4 rounded-2xl font-bold text-sm shadow-md active:scale-95 transition">Save Location</button>
+                            <button onclick="window.closeAddrForm()" class="bg-gray-200 text-gray-700 px-6 py-4 rounded-2xl font-bold text-sm shadow-md active:scale-95 transition">Cancel</button>
+                        </div>
+                    </div>
+                    <div id="addressList" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+                </div>
+                <div class="modern-card p-8 bg-green-50 border-green-100">
+                    <span class="text-[10px] font-bold text-green-600 uppercase tracking-widest block mb-4">Refer a Friend</span>
+                    <p class="text-xs text-gray-500 mb-4 leading-relaxed">Know someone who loves fresh greens? Enter their email below to send them an invite link!</p>
+                    <div class="flex gap-2">
+                        <input type="email" id="referralEmail" placeholder="Friend's Email Address" class="flex-1 p-3 bg-white rounded-xl outline-none ring-1 ring-gray-200 text-sm focus:ring-2 focus:ring-green-500">
+                        <button onclick="window.sendReferral()" class="bg-green-600 text-white px-5 py-3 rounded-xl font-bold text-xs shadow-md active:scale-95 transition whitespace-nowrap">Send Invite</button>
+                    </div>
+                </div>
+                <button onclick="window.logout()" class="w-full py-5 text-red-500 font-bold text-xs uppercase tracking-widest border border-dashed border-red-100 rounded-[24px] hover:bg-red-50 transition"><i class="fas fa-sign-out-alt mr-2"></i> Log Out Account</button>
+            </div>
+        </div>
+
+        <!-- MY DESK VIEW (FIXED) -->
+        <div id="viewComplaints" class="fade-in hidden space-y-6 pb-4">
+
+            <!-- Header -->
+            <div>
+                <h2 class="font-bold text-2xl tracking-tight flex items-center gap-2">
+                    <i class="fas fa-comment-dots text-red-500"></i> My Desk
+                </h2>
+                <p class="text-gray-400 text-sm mt-1">Your complaints, feedback & reviews</p>
+            </div>
+
+            <!-- Complaints Section -->
+            <div class="modern-card p-6">
+                <div class="flex items-center justify-between mb-5">
+                    <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">My Complaints</span>
+                    <div class="flex gap-1 bg-gray-100 rounded-xl p-1">
+                        <button onclick="window.filterMyComplaints('all')"    id="cf-all"      class="cf-btn px-3 py-1 rounded-lg text-xs font-bold bg-white shadow text-gray-800">All</button>
+                        <button onclick="window.filterMyComplaints('open')"   id="cf-open"     class="cf-btn px-3 py-1 rounded-lg text-xs font-bold text-gray-500">Pending</button>
+                        <button onclick="window.filterMyComplaints('resolved')" id="cf-resolved" class="cf-btn px-3 py-1 rounded-lg text-xs font-bold text-gray-500">Resolved</button>
+                    </div>
+                </div>
+                <div id="myComplaintsList" class="space-y-3">
+                    <p class="text-center text-gray-300 py-6 text-sm">Loading...</p>
+                </div>
+            </div>
+
+            <!-- Farm Good Points -->
+            <div class="modern-card p-6">
+                <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest block mb-4">Why We Love What We Do</span>
+                <div class="space-y-3" id="farmGoodPointsList">
+                    <div class="flex items-start gap-3 bg-green-50 rounded-2xl p-4">
+                        <span class="text-green-500 mt-0.5"><i class="fas fa-seedling"></i></span>
+                        <p class="text-sm text-gray-700 font-medium">100% naturally grown — no pesticides, no chemicals, ever.</p>
+                    </div>
+                    <div class="flex items-start gap-3 bg-green-50 rounded-2xl p-4">
+                        <span class="text-green-500 mt-0.5"><i class="fas fa-truck"></i></span>
+                        <p class="text-sm text-gray-700 font-medium">Harvested fresh and delivered to your door the same morning.</p>
+                    </div>
+                    <div class="flex items-start gap-3 bg-green-50 rounded-2xl p-4">
+                        <span class="text-green-500 mt-0.5"><i class="fas fa-leaf"></i></span>
+                        <p class="text-sm text-gray-700 font-medium">Packed with nutrients — microgreens have up to 40x more vitamins than mature plants.</p>
+                    </div>
+                    <div class="flex items-start gap-3 bg-green-50 rounded-2xl p-4">
+                        <span class="text-green-500 mt-0.5"><i class="fas fa-heart"></i></span>
+                        <p class="text-sm text-gray-700 font-medium">Supporting local urban farming and sustainable food systems.</p>
+                    </div>
+                    <div class="flex items-start gap-3 bg-green-50 rounded-2xl p-4">
+                        <span class="text-green-500 mt-0.5"><i class="fas fa-star"></i></span>
+                        <p class="text-sm text-gray-700 font-medium">Trusted by top chefs, restaurants and health-conscious families across the city.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Share a Review -->
+            <div class="modern-card p-6 bg-gradient-to-br from-purple-50 to-pink-50 border border-purple-100">
+                <span class="text-[10px] font-bold text-purple-500 uppercase tracking-widest block mb-2">Loved Our Greens?</span>
+                <p class="text-sm text-gray-600 mb-5 leading-relaxed">Your review helps other health lovers find us. It takes 30 seconds and means the world to us! 🌱</p>
+                <div class="space-y-3">
+                    <a href="https://www.facebook.com/oligogreens" target="_blank"
+                       class="flex items-center gap-4 bg-white rounded-2xl px-5 py-4 shadow-sm border border-gray-100 active:scale-95 transition">
+                        <div class="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center shrink-0">
+                            <i class="fab fa-facebook-f text-white text-lg"></i>
+                        </div>
+                        <div>
+                            <p class="font-bold text-sm text-gray-800">Review us on Facebook</p>
+                            <p class="text-xs text-gray-400">Share your experience with your friends</p>
+                        </div>
+                        <i class="fas fa-chevron-right text-gray-300 ml-auto"></i>
+                    </a>
+                    <a href="https://www.instagram.com/oligogreens" target="_blank"
+                       class="flex items-center gap-4 bg-white rounded-2xl px-5 py-4 shadow-sm border border-gray-100 active:scale-95 transition">
+                        <div class="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style="background: linear-gradient(135deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888)">
+                            <i class="fab fa-instagram text-white text-lg"></i>
+                        </div>
+                        <div>
+                            <p class="font-bold text-sm text-gray-800">Tag us on Instagram</p>
+                            <p class="text-xs text-gray-400">@oligogreens — show your plate!</p>
+                        </div>
+                        <i class="fas fa-chevron-right text-gray-300 ml-auto"></i>
+                    </a>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- CART -->
+    <div id="cartModal" class="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 hidden flex flex-col justify-end sm:justify-center sm:items-center">
+        <div class="bg-white rounded-t-[40px] sm:rounded-[40px] p-8 shadow-2xl max-h-[85vh] overflow-y-auto w-full max-w-xl mx-auto">
+            <div class="flex justify-between items-center mb-8">
+                <h2 class="text-2xl font-bold tracking-tight">Basket</h2>
+                <button onclick="window.closeCart()" class="text-gray-400 w-10 h-10 rounded-full hover:bg-gray-100 flex items-center justify-center transition"><i class="fas fa-times text-xl"></i></button>
+            </div>
+            <div id="cartItems" class="space-y-6 mb-8"></div>
+            <div class="border-t border-gray-100 pt-6 space-y-5">
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="bg-gray-50 p-4 rounded-2xl">
+                        <span class="text-[10px] font-bold text-gray-400 uppercase block mb-1">Deliver To</span>
+                        <select id="checkoutAddrSelect" class="w-full bg-transparent border-none font-bold text-sm outline-none focus:ring-0 cursor-pointer"><option value="">-- Choose --</option></select>
+                    </div>
+                    <div class="bg-gray-50 p-4 rounded-2xl">
+                        <span class="text-[10px] font-bold text-gray-400 uppercase block mb-1">Date</span>
+                        <input type="date" id="checkoutDate" class="w-full bg-transparent border-none font-bold text-sm outline-none focus:ring-0 cursor-pointer text-gray-800" onchange="window.validateDeliveryDate(this.value)">
+                        <p class="text-[9px] text-gray-400 mt-1">No Sundays · No Holidays</p>
+                        <div id="dateWarning" class="hidden mt-2 text-[10px] font-bold text-red-600 leading-4 flex items-start gap-1">
+                            <i class="fas fa-ban mt-0.5 shrink-0"></i>
+                            <span id="dateWarningMsg"></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-gray-50 p-4 rounded-2xl">
+                    <span class="text-[10px] font-bold text-gray-400 uppercase block mb-1">Message for Production (Optional)</span>
+                    <textarea id="orderNote" placeholder="e.g. Deliver by 10am, Call on arrival..." class="w-full bg-transparent border-none text-sm outline-none focus:ring-0 text-gray-800 resize-none" rows="2"></textarea>
+                </div>
+                <div class="flex justify-between items-center px-2">
+                    <span class="text-gray-400 font-medium">Grand Total</span>
+                    <span id="cartTotal" class="text-2xl font-bold text-green-700 tracking-tighter">Box 0</span>
+                </div>
+                <button id="orderBtn" type="button" onclick="window.placeOrder()" class="w-full bg-green-600 text-white py-5 rounded-[24px] font-bold shadow-xl shadow-green-100 disabled:opacity-50 transition active:scale-[0.98]">Confirm Order (COD)</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- NAV BAR -->
+    <nav class="fixed bottom-0 w-full bg-white/90 backdrop-blur-md border-t border-gray-100 flex justify-around py-4 text-gray-400 z-40 px-4 max-w-5xl left-1/2 transform -translate-x-1/2">
+        <button onclick="window.navTo('viewHome')" id="nav-viewHome" class="flex flex-col items-center nav-active group w-16">
+            <i class="fas fa-home text-lg mb-1 transition-transform group-active:scale-90"></i>
+            <span class="text-[10px] font-bold uppercase tracking-tighter">Shop</span>
+        </button>
+        <button onclick="window.navTo('viewOrders')" id="nav-viewOrders" class="flex flex-col items-center group w-16">
+            <i class="fas fa-receipt text-lg mb-1 transition-transform group-active:scale-90"></i>
+            <span class="text-[10px] font-bold uppercase tracking-tighter">Orders</span>
+        </button>
+        <button onclick="window.navTo('viewFarm')" id="nav-viewFarm" class="flex flex-col items-center group w-16">
+            <i class="fas fa-seedling text-lg mb-1 transition-transform group-active:scale-90"></i>
+            <span class="text-[10px] font-bold uppercase tracking-tighter">Farm</span>
+        </button>
+        <button onclick="window.navTo('viewProfile')" id="nav-viewProfile" class="flex flex-col items-center group w-16">
+            <i class="fas fa-user-circle text-lg mb-1 transition-transform group-active:scale-90"></i>
+            <span class="text-[10px] font-bold uppercase tracking-tighter">Profile</span>
+        </button>
+        <button onclick="window.navTo('viewComplaints')" id="nav-viewComplaints" class="flex flex-col items-center group w-16">
+            <i class="fas fa-comment-dots text-lg mb-1 transition-transform group-active:scale-90"></i>
+            <span class="text-[10px] font-bold uppercase tracking-tighter">My Desk</span>
+        </button>
+    </nav>
+</div>
+
+<script>
+// Immediate loader hide for all devices
+// _authResolved is set to true by onAuthStateChanged so fallback timers
+// never force the login screen on already-logged-in users.
+window._authResolved = false;
+(function() {
+    // Force hide loader after 5 seconds max — but ONLY show login if Firebase
+    // hasn't already resolved the auth state (i.e. user not logged in).
+    setTimeout(function() {
+        if (window._authResolved) return; // Firebase already handled it — do nothing
+        var loader = document.getElementById('appLoader');
+        if (loader) loader.style.display = 'none';
+        // Only show auth screen if user is genuinely not logged in
+        var authSection = document.getElementById('authSection');
+        if (authSection) {
+            authSection.classList.remove('hidden');
+            authSection.classList.add('flex');
+        }
+    }, 5000); // Extended to 5s to give Firebase more time on slow networks
+
+    // Check network connection
+    if (!navigator.onLine) {
+        var errorMsg = document.getElementById('mobileErrorMessage');
+        if (errorMsg) {
+            errorMsg.innerHTML = '📱 No internet connection. Please check your network.';
+            errorMsg.classList.remove('hidden');
+        }
+    }
+})();
+</script>
+
+<script>
+    // Firebase Compat — works on Vodafone, Jio, Airtel (no ES module imports)
+    const firebaseConfig = {
+        apiKey: "AIzaSyCtR2jdbu-SZ-7obmg88fPksJnNxk9BnqQ",
+        authDomain: "oligo-store.firebaseapp.com",
+        databaseURL: "https://oligo-store-default-rtdb.firebaseio.com",
+        projectId: "oligo-store",
+        storageBucket: "oligo-store.firebasestorage.app",
+        messagingSenderId: "891788554016",
+        appId: "1:891788554016:web:206c7da0a562fb7b1bf145"
+    };
+    let app, auth, db;
+    try {
+        app = firebase.initializeApp(firebaseConfig);
+        auth = firebase.auth();
+        db = firebase.database();
+        // Speed up auth on slow networks
+        auth.useDeviceLanguage();
+        // LOCAL persistence = user stays logged in across browser sessions
+        auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(function(e) {
+            console.warn('Persistence set failed (session will still work):', e);
+        });
+        // Keep database connection alive
+        db.goOnline();
+        // Enable offline persistence for database
+        try { db.enablePersistence(); } catch(e) {}
+        console.log("Firebase compat initialized — Vodafone ready");
+    } catch(e) {
+        console.error("Firebase init error:", e);
+    }
+
+    // Shim functions so rest of code works unchanged
+    function ref(dbOrPath, path) {
+        if (typeof dbOrPath === 'string') return db.ref(dbOrPath);
+        if (path !== undefined) return dbOrPath.ref(path);
+        return dbOrPath.ref();
+    }
+    function set(reference, value) { return reference.set(value); }
+    function push(reference, value) {
+        if (value !== undefined) return reference.push(value);
+        return reference.push();
+    }
+    function remove(reference) { return reference.remove(); }
+    function onValue(reference, callback) { reference.on('value', callback); }
+    function serverTimestamp() { return firebase.database.ServerValue.TIMESTAMP; }
+    function onAuthStateChanged(authObj, callback) { return authObj.onAuthStateChanged(callback); }
+    function signInWithEmailAndPassword(authObj, email, pass) { return authObj.signInWithEmailAndPassword(email, pass); }
+    function createUserWithEmailAndPassword(authObj, email, pass) { return authObj.createUserWithEmailAndPassword(email, pass); }
+    function signOut(authObj) { return authObj.signOut(); }
+    function sendPasswordResetEmail(authObj, email) { return authObj.sendPasswordResetEmail(email); }
+
+    function getFriendlyErrorMessage(error) {
+        console.log("Error:", error.code, error.message); 
+        const code = error.code;
+        if (code === 'auth/invalid-credential' || code === 'auth/user-not-found' || code === 'auth/wrong-password') return "Incorrect email or password.";
+        if (code === 'auth/email-already-in-use') return "This email is already registered.";
+        if (code === 'auth/weak-password') return "Password must be at least 6 characters.";
+        if (code === 'auth/invalid-email') return "Invalid email address format.";
+        if (code === 'auth/network-request-failed') return "Network error. Check your connection.";
+        return error.message || "An error occurred. Try again.";
+    }
+
+    let userLocalData = null; 
+    let basket = JSON.parse(localStorage.getItem('oligo_basket')) || []; 
+    let menuData = {}; 
+    let allOrdersData = {};
+    window._loggedUid = null; // window-scoped so accessible across all script tags 
+    let holidaysData = {}; 
+    let editingOrderId = null; 
+    let editingAddressId = null;
+
+    function saveBasket() { 
+        localStorage.setItem('oligo_basket', JSON.stringify(basket)); 
+        updateBadge(); 
+    }
+
+    // Navigation
+    window.navTo = (id) => {
+        ['viewHome', 'viewMenu', 'viewOrders', 'viewFarm', 'viewProfile', 'viewComplaints'].forEach(v => {
+            const el = document.getElementById(v); 
+            if(el) el.classList.add('hidden');
+            const btn = document.getElementById('nav-' + v); 
+            if(btn) btn.classList.remove('nav-active');
+        });
+        document.getElementById(id).classList.remove('hidden');
+        const activeNav = document.getElementById('nav-' + id); 
+        if(activeNav) activeNav.classList.add('nav-active');
+        const mainEl = document.querySelector('main');
+        if (mainEl) mainEl.scrollTop = 0;
+        if (id === 'viewFarm') window.loadFarmFeed();
+        if (id === 'viewComplaints') {
+            // Small delay to ensure auth state is fully propagated
+            setTimeout(() => {
+                window.loadMyComplaints();
+            }, 100);
+        }
+    };
+
+    // Toast notification
+    let toastTimeout;
+    window.showToast = (m, isError = false) => {
+        const t = document.getElementById('toast'); 
+        if(toastTimeout) clearTimeout(toastTimeout);
+        t.innerText = m;
+        t.className = isError ? 
+            "fixed top-5 left-1/2 transform -translate-x-1/2 z-[9999] px-6 py-3 rounded-full text-xs font-bold shadow-xl text-center bg-red-600 text-white transition-all duration-300 show" : 
+            "fixed top-5 left-1/2 transform -translate-x-1/2 z-[9999] px-6 py-3 rounded-full text-xs font-bold shadow-xl text-center bg-gray-900 text-white transition-all duration-300 show";
+        toastTimeout = setTimeout(() => { t.classList.remove('show'); }, 3000);
+    };
+
+    window.toggleRecovery = (show) => { 
+        document.getElementById('recoveryModal').classList.toggle('hidden', !show); 
+    };
+    
+    window.sendResetLink = () => {
+        const email = document.getElementById('recInputEmail').value.trim();
+        if(!email) return window.showToast("Please enter your email", true);
+        sendPasswordResetEmail(auth, email).then(() => { 
+            window.showToast("Reset link sent! Check your email."); 
+            window.toggleRecovery(false); 
+        }).catch((err) => { 
+            window.showToast(getFriendlyErrorMessage(err), true); 
+        });
+    };
+
+    window.sendReferral = () => {
+        const email = document.getElementById('referralEmail').value.trim();
+        if (!email || !email.includes('@')) return window.showToast("Please enter a valid email", true);
+        if (!auth.currentUser) return window.showToast("Please login first", true);
+        
+        const refData = { friendEmail: email, referredBy: auth.currentUser.uid, referredByName: userLocalData?.name || "A User", timestamp: serverTimestamp() };
+        push(ref(db, 'referrals'), refData);
+        
+        const subject = encodeURIComponent("You're invited to Oligo - Fresh Microgreens"); 
+        const appLink = window.location.href; 
+        const body = encodeURIComponent(`Hey! I've been ordering fresh microgreens from Oligo. Create your account and order here: ${appLink}`);
+        window.location.href = `mailto:${email}?subject=${subject}&body=${body}`;
+        
+        document.getElementById('referralEmail').value = ""; 
+        window.showToast("Invite drafted! Check your email app.");
+    };
+
+    window.openCart = () => { 
+        renderBasket(); 
+        document.getElementById('cartModal').classList.remove('hidden'); 
+    };
+    
+    window.closeCart = () => { 
+        document.getElementById('cartModal').classList.add('hidden'); 
+        editingOrderId = null; 
+        document.getElementById('orderNote').value = ""; 
+    };
+
+    window.toggleAuth = (isReg) => { 
+        document.getElementById('loginBox').classList.toggle('hidden', isReg); 
+        document.getElementById('registerBox').classList.toggle('hidden', !isReg); 
+        window.scrollTo(0,0); 
+    };
+
+    let appInitialized = false;
+
+    // Auth state handler — fires on every page load for logged-in users
+    onAuthStateChanged(auth, (user) => {
+        console.log("Auth state:", user ? "Logged in" : "Logged out");
+
+        // Mark auth as resolved — prevents fallback timers from showing login screen
+        window._authResolved = true;
+
+        // === FIX: Update global UID immediately ===
+        if (user) {
+            window._loggedUid = user.uid;
+        } else {
+            window._loggedUid = null;
+        }
+
+        // Hide loader always
+        document.getElementById('appLoader').style.display = 'none';
+
+        if (user) {
+            // If manual login already handled the UI transition, skip double-init
+            if (appInitialized) return;
+            appInitialized = true;
+
+            // ── Already logged in: go straight to app, no login screen ──
+            document.getElementById('authSection').classList.add('hidden');
+            document.getElementById('authSection').classList.remove('flex');
+            document.getElementById('mainApp').classList.remove('hidden');
+
+            // Fetch user data
+            fetchUser(user.uid);
+            fetchProducers();
+            fetchOrders(user.uid);
+
+            // Listen for holidays
+            onValue(ref(db, 'settings/holidays'), (snap) => {
+                holidaysData = snap.val() || {};
+                updateUpcomingHolidayBanner();
+            });
+
+            updateBadge();
+            window.navTo('viewHome');
+            checkNotifPermission();
+            // Save OneSignal ID in case it wasn't saved on first login
+            try { window.saveOneSignalId(user.uid); } catch(e) {}
+        } else {
+            appInitialized = false;
+            // Genuinely logged out — show login screen
+            document.getElementById('mainApp').classList.add('hidden');
+            document.getElementById('authSection').classList.remove('hidden');
+            document.getElementById('authSection').classList.add('flex');
+        }
+    });
+
+    // Fetch user data
+    function fetchUser(uid) {
+        onValue(ref(db, 'customers/' + uid), (snap) => {
+            const data = snap.val() || {}; 
+            userLocalData = data;
+            document.getElementById('headerUserName').innerText = data.name ? data.name.split(' ')[0] : "User";
+            document.getElementById('profTitleName').innerText = data.name || "My Account";
+            document.getElementById('profName').value = data.name || "";
+            document.getElementById('profPhone').value = data.phone || "";
+            renderAddresses(); 
+            updateCheckoutSelect();
+        });
+    }
+
+    window.updateProfile = () => {
+        const name = document.getElementById('profName').value.trim(); 
+        const phone = document.getElementById('profPhone').value.trim();
+        if(!name) return window.showToast("Please enter your full name.", true); 
+        if(!phone) return window.showToast("Phone number is required.", true);
+        
+        set(ref(db, `customers/${auth.currentUser.uid}/name`), name);
+        set(ref(db, `customers/${auth.currentUser.uid}/phone`), phone)
+            .then(() => window.showToast("Profile Updated"));
+    };
+
+    // Address functions
+    window.openNewAddrForm = () => { 
+        editingAddressId = null; 
+        document.getElementById('newJointName').value = ""; 
+        document.getElementById('newLocName').value = ""; 
+        document.getElementById('newFullAddr').value = ""; 
+        document.getElementById('saveAddrBtn').innerText = "Save Location"; 
+        document.getElementById('addrForm').classList.remove('hidden'); 
+    };
+    
+    window.closeAddrForm = () => { 
+        document.getElementById('addrForm').classList.add('hidden'); 
+        editingAddressId = null; 
+    };
+    
+    window.editAddr = (id) => { 
+        const addrs = userLocalData?.addresses || {}; 
+        const addr = addrs[id]; 
+        if(!addr) return; 
+        editingAddressId = id; 
+        document.getElementById('newJointName').value = addr.jointName || ""; 
+        document.getElementById('newLocName').value = addr.location || ""; 
+        document.getElementById('newFullAddr').value = addr.fullAddress || ""; 
+        document.getElementById('saveAddrBtn').innerText = "Update Location"; 
+        document.getElementById('addrForm').classList.remove('hidden'); 
+        document.getElementById('addrForm').scrollIntoView({ behavior: 'smooth' }); 
+    };
+    
+    window.saveNewAddress = () => {
+        const joint = document.getElementById('newJointName').value.trim(); 
+        const loc = document.getElementById('newLocName').value.trim(); 
+        const full = document.getElementById('newFullAddr').value.trim();
+        if(!joint) return window.showToast("Please give a name.", true); 
+        if(!loc) return window.showToast("Area name is required.", true); 
+        if(!full) return window.showToast("Full address is required.", true);
+        
+        const addressData = { jointName: joint, location: loc, fullAddress: full };
+        const addressRef = ref(db, `customers/${auth.currentUser.uid}/addresses`);
+        
+        if (editingAddressId) {
+            set(ref(db, `customers/${auth.currentUser.uid}/addresses/${editingAddressId}`), addressData)
+                .then(() => { window.closeAddrForm(); window.showToast("Address Updated"); });
+        } else {
+            push(addressRef, addressData)
+                .then(() => { window.closeAddrForm(); window.showToast("Address Saved"); });
+        }
+    };
+
+    window.deleteAddr = (id) => { 
+        if(confirm("Remove this address?")) 
+            remove(ref(db, `customers/${auth.currentUser.uid}/addresses/${id}`)); 
+    };
+
+    function renderAddresses() {
+        const list = document.getElementById('addressList'); 
+        const addrs = userLocalData?.addresses || {};
+        if(Object.keys(addrs).length === 0) { 
+            list.innerHTML = `<p class="text-xs text-gray-400 py-4 text-center col-span-2">No locations saved.</p>`; 
+            return; 
+        }
+        list.innerHTML = Object.entries(addrs).map(([id, a]) => {
+            let icon = a.jointName.toLowerCase().includes('home') ? 'fa-home' : 'fa-building';
+            return `
+            <div class="bg-white p-5 rounded-2xl border border-gray-100 flex justify-between items-center">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-green-50 text-green-600 rounded-xl flex items-center justify-center"><i class="fas ${icon}"></i></div>
+                    <div>
+                        <p class="text-xs font-bold text-green-600">${a.jointName}</p>
+                        <p class="text-sm font-bold">${a.location}</p>
+                        <p class="text-[11px] text-gray-400">${a.fullAddress}</p>
+                    </div>
+                </div>
+                <div class="flex gap-1">
+                    <button onclick="window.editAddr('${id}')" class="text-gray-400 hover:text-blue-500 p-2"><i class="fas fa-edit"></i></button>
+                    <button onclick="window.deleteAddr('${id}')" class="text-gray-400 hover:text-red-500 p-2"><i class="fas fa-trash"></i></button>
+                </div>
+            </div>`;
+        }).join('');
+    }
+
+    function updateCheckoutSelect() {
+        const sel = document.getElementById('checkoutAddrSelect'); 
+        const addrs = userLocalData?.addresses || {}; 
+        sel.innerHTML = '<option value="">-- Choose address --</option>';
+        Object.entries(addrs).forEach(([id, a]) => { 
+            sel.innerHTML += `<option value="${a.jointName} - ${a.location}: ${a.fullAddress}">${a.jointName} (${a.location})</option>`; 
+        });
+    }
+
+    // Fetch producers
+    function fetchProducers() {
+        onValue(ref(db, 'Production'), (snap) => {
+            const list = document.getElementById('producersList'); 
+            list.innerHTML = ''; 
+            const data = snap.val(); 
+            if(!data) {
+                list.innerHTML = '<p class="text-center text-gray-400 py-4">No producers available</p>';
+                return;
+            }
+            Object.entries(data).forEach(([id, p]) => {
+                if(p.approved) list.innerHTML += `
+                    <div onclick="window.openMenu('${id}', '${p.name}', '${p.cuisine || 'Microgreens'}')" class="bg-white p-5 rounded-[32px] shadow-sm flex items-center gap-4 border border-gray-100 cursor-pointer hover:shadow-md transition">
+                        <div class="bg-green-100 w-16 h-16 rounded-3xl flex items-center justify-center text-green-600 text-2xl"><i class="fas fa-leaf"></i></div>
+                        <div class="flex-1">
+                            <h3 class="font-bold text-lg">${p.name}</h3>
+                            <p class="text-xs text-gray-400">${p.cuisine || 'Fresh Harvest'}</p>
+                        </div>
+                        <i class="fas fa-chevron-right text-gray-300"></i>
+                    </div>`;
+            });
+        });
+    }
+
+    window.openMenu = (id, name) => {
+        const currentId = localStorage.getItem('oligo_active_producer_id');
+        if(currentId && currentId !== id && basket.length > 0) { 
+            if(confirm("Switching farms will clear your basket. Continue?")) { 
+                basket = []; 
+                saveBasket(); 
+            } else { 
+                return; 
+            } 
+        }
+        localStorage.setItem('oligo_active_producer_id', id); 
+        localStorage.setItem('oligo_active_producer_name', name);
+        document.getElementById('menuTitle').innerText = name; 
+        window.navTo('viewMenu');
+        
+        onValue(ref(db, 'menus/' + id), (snap) => { 
+            menuData = snap.val() || {}; 
+            renderCatBar(); 
+            renderMenuItems('All'); 
+        });
+    };
+
+    function renderCatBar() {
+        const bar = document.getElementById('categoryBar'); 
+        const cats = ['All', 'Microgreens', 'Live Trays', 'Mix Microgreens', 'Edible Flowers', 'Baby Leaves', 'Wheatgrass'];
+        bar.innerHTML = cats.map(c => 
+            `<button onclick="window.renderMenuItems('${c}')" id="catBtn-${c.replace(/\s+/g,'')}" class="cat-pill">${c}</button>`
+        ).join('');
+    }
+
+    window.renderMenuItems = (cat) => {
+        const list = document.getElementById('menuList'); 
+        list.innerHTML = '';
+        document.querySelectorAll('.cat-pill').forEach(b => b.classList.remove('active')); 
+        const btn = document.getElementById('catBtn-' + cat.replace(/\s+/g,'')); 
+        if(btn) btn.classList.add('active');
+        
+        let hasItems = false;
+        Object.entries(menuData).forEach(([id, item]) => {
+            if(!item.available) return; 
+            if(cat !== 'All' && item.category !== cat) return;
+            hasItems = true;
+            list.innerHTML += `
+                <div class="bg-white p-5 rounded-[32px] flex gap-5 items-center border border-gray-50 shadow-sm">
+                    <img src="${item.imageUrl || ''}" class="w-24 h-24 rounded-2xl object-cover bg-gray-50" onerror="this.src='https://placehold.co/150x150?text=Oligo'">
+                    <div class="flex-1">
+                        <h4 class="font-bold text-lg">${item.name}</h4>
+                        <p class="text-[11px] text-gray-500 mt-1">${item.description || 'Fresh harvest.'}</p>
+                        <div class="flex justify-between items-center mt-3">
+                            <span class="font-bold text-green-700 text-lg">Box ${item.price}</span>
+                            <button onclick="window.addToBasket('${id}', '${item.name}', '${item.price}', '${item.category || ''}')" class="bg-green-600 text-white px-5 py-2 rounded-xl text-xs font-bold shadow-md active:scale-90 transition">ADD</button>
+                        </div>
+                    </div>
+                </div>`;
+        });
+        if(!hasItems) {
+            list.innerHTML = '<p class="text-center text-gray-400 py-8">No items in this category</p>';
+        }
+    };
+
+    window.addToBasket = (id, name, price, category, qty = 1) => {
+        const numPrice = parseFloat(price) || 0; 
+        const existing = basket.find(i => i.id === id); 
+        if(existing) { 
+            existing.qty = (existing.qty || 0) + qty; 
+        } else { 
+            basket.push({ id, name, price: numPrice, category: category || 'Microgreens', qty }); 
+        }
+        saveBasket(); 
+        window.showToast("Added to basket");
+    };
+
+    function updateBadge() { 
+        const b = document.getElementById('cartBadge'); 
+        const count = basket.reduce((a, b) => a + (b.qty || 0), 0); 
+        if (b) {
+            b.innerText = count; 
+            b.classList.toggle('hidden', count === 0); 
+        }
+    }
+
+    function renderBasket() {
+        const list = document.getElementById('cartItems'); 
+        const totalEl = document.getElementById('cartTotal'); 
+        let total = 0;
+        
+        if(basket.length === 0) { 
+            list.innerHTML = '<p class="text-center text-gray-400 py-10">Your basket is empty</p>'; 
+            totalEl.innerText = "Box 0"; 
+            return; 
+        }
+        
+        list.innerHTML = basket.map((item, idx) => {
+            total += (item.price * item.qty); 
+            return `
+                <div class="flex justify-between items-center bg-gray-50 p-4 rounded-2xl">
+                    <div>
+                        <p class="font-bold">${item.name}</p>
+                        <p class="text-xs text-gray-500">Qty: ${item.qty}</p>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <button onclick="window.changeQty(${idx}, -1)" class="w-8 h-8 rounded-full bg-white border flex items-center justify-center">-</button>
+                        <span class="font-bold">${item.qty}</span>
+                        <button onclick="window.changeQty(${idx}, 1)" class="w-8 h-8 rounded-full bg-white border flex items-center justify-center">+</button>
+                    </div>
+                </div>`;
+        }).join('');
+        totalEl.innerText = "Box " + total;
+    }
+
+    window.changeQty = (idx, d) => { 
+        basket[idx].qty += d; 
+        if(basket[idx].qty <= 0) basket.splice(idx, 1); 
+        saveBasket(); 
+        renderBasket(); 
+    };
+
+    window.placeOrder = () => {
+        if(!userLocalData?.phone) { 
+            window.showToast("Phone number required.", true); 
+            window.closeCart(); 
+            window.navTo('viewProfile'); 
+            return; 
+        }
+        if(basket.length === 0) { 
+            return window.showToast("Your basket is empty.", true); 
+        }
+        
+        const activeProducerId = localStorage.getItem('oligo_active_producer_id'); 
+        if(!activeProducerId) { 
+            window.showToast("Please select a farm.", true); 
+            window.closeCart(); 
+            window.navTo('viewHome'); 
+            return; 
+        }
+        
+        const addr = document.getElementById('checkoutAddrSelect').value; 
+        if(!addr) return window.showToast("Please select address.", true);
+        
+        const reqDate = document.getElementById('checkoutDate').value; 
+        if(!reqDate) return window.showToast("Please select a delivery date.", true);
+
+        // Block Sundays
+        const selDate = new Date(reqDate + 'T00:00:00');
+        if (selDate.getDay() === 0) {
+            window.showToast("Sunday Farm Closed — please select another date.", true);
+            return;
+        }
+        // Block admin holidays by name
+        const holidayName = window.getHolidayName(reqDate);
+        if (holidayName) {
+            window.showToast(`Holiday: ${holidayName} — Farm closed. Please select another date.`, true);
+            return;
+        }
+        
+        const note = document.getElementById('orderNote').value.trim();
+        const total = basket.reduce((a, b) => a + (b.price * b.qty), 0); 
+        
+        const orderData = { 
+            customerUid: auth.currentUser.uid, 
+            customerName: userLocalData.name || "Guest", 
+            customerPhone: userLocalData.phone, 
+            restaurantId: activeProducerId, 
+            items: basket, 
+            originalItems: basket, 
+            totalAmount: total, 
+            address: addr, 
+            requestedDate: reqDate, 
+            customerNote: note, 
+            status: "PLACED", 
+            createdAt: serverTimestamp() 
+        };
+        
+        if(editingOrderId) {
+            orderData.updatedAt = serverTimestamp();
+            set(ref(db, 'orders/' + editingOrderId), orderData).then(successHandler).catch(errorHandler);
+        } else {
+            push(ref(db, 'orders'), orderData).then(successHandler).catch(errorHandler);
+        }
+
+        function successHandler() { 
+            basket = []; 
+            saveBasket(); 
+            window.closeCart(); 
+            window.navTo('viewOrders'); 
+            window.showToast(editingOrderId ? "Order Updated!" : "Order Placed!"); 
+            editingOrderId = null; 
+        }
+        function errorHandler(e) { 
+            window.showToast("Error: " + e.message, true); 
+        }
+    };
+
+    window.editOrder = (orderId) => {
+        const order = allOrdersData[orderId]; 
+        if(!order || order.status !== 'PLACED') { 
+            return window.showToast("Cannot edit this order.", true); 
+        }
+        
+        localStorage.setItem('oligo_active_producer_id', order.restaurantId);
+        basket = (order.items || []).map(item => ({ 
+            id: item.id, 
+            name: item.name, 
+            price: parseFloat(item.price) || 0, 
+            qty: parseInt(item.qty) || 1,
+            category: item.category || '' 
+        }));
+        saveBasket(); 
+        
+        window.openCart(); 
+        editingOrderId = orderId; 
+        document.getElementById('orderBtn').innerText = "Update Order";
+        document.getElementById('checkoutDate').value = order.requestedDate; 
+        document.getElementById('orderNote').value = order.customerNote || "";
+    };
+
+    window.repeatOrder = (orderId) => {
+        const order = allOrdersData[orderId]; 
+        if(!order) return window.showToast("Order not found!", true);
+        
+        localStorage.setItem('oligo_active_producer_id', order.restaurantId);
+        (order.originalItems || order.items).forEach(item => {
+            const existing = basket.find(b => b.id === item.id);
+            if(existing) { 
+                existing.qty += parseInt(item.qty) || 1; 
+            } else { 
+                basket.push({ 
+                    id: item.id, 
+                    name: item.name, 
+                    price: parseFloat(item.price) || 0, 
+                    qty: parseInt(item.qty) || 1,
+                    category: item.category || '' 
+                }); 
+            }
+        });
+        saveBasket(); 
+        window.openCart(); 
+        window.showToast("Items added from previous order.");
+    };
+
+    // Fetch orders with delivery tracking
+    // Track last known statuses to detect changes
+    const _knownStatuses = {};
+    let _ordersFirstLoad = true;
+
+    function fetchOrders(uid) {
+        onValue(ref(db, 'orders'), (snap) => {
+            const list = document.getElementById('ordersList'); 
+            if(!list) return;
+            
+            const data = snap.val(); 
+            if(!data) {
+                list.innerHTML = '<p class="text-center text-gray-400 py-4">No orders yet</p>';
+                _ordersFirstLoad = false;
+                return;
+            }
+
+            // ── Detect status changes and send notifications ─────────────────
+            if (!_ordersFirstLoad) {
+                Object.entries(data).forEach(([oid, order]) => {
+                    if (order.customerUid !== uid) return;
+                    const prev = _knownStatuses[oid];
+                    const curr = order.status;
+                    if (prev && prev !== curr) {
+                        window.sendOrderStatusNotification(oid, curr, order);
+                    }
+                });
+            }
+            // Record current statuses
+            Object.entries(data).forEach(([oid, order]) => {
+                if (order.customerUid === uid) _knownStatuses[oid] = order.status;
+            });
+            _ordersFirstLoad = false; 
+            
+            allOrdersData = data; 
+            const myOrders = Object.entries(data)
+                .filter(([_, o]) => o.customerUid === uid)
+                .sort((a,b) => (b[1].createdAt || 0) - (a[1].createdAt || 0));
+            
+            if(myOrders.length === 0) {
+                list.innerHTML = '<p class="text-center text-gray-400 py-4">No orders yet</p>';
+                return;
+            }
+            
+            list.innerHTML = myOrders.map(([id, o]) => {
+                // Status badge color
+                let statusClass = "bg-gray-100 text-gray-500";
+                if(o.status === "PLACED") statusClass = "bg-blue-100 text-blue-600";
+                if(o.status === "ACCEPTED" || o.status === "PREPARING") statusClass = "bg-yellow-100 text-yellow-700";
+                if(o.status === "OUT_FOR_DELIVERY") statusClass = "bg-green-100 text-green-700";
+                if(o.status === "DELIVERED") statusClass = "bg-gray-100 text-gray-500";
+                
+                // Format dates
+                const orderDate = o.createdAt ? new Date(o.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) : 'N/A';
+                const deliveryDate = o.requestedDate ? new Date(o.requestedDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) : 'ASAP';
+                
+                // Items display (plain fallback — only used when no adjustment detected)
+                const itemsHtml = (o.items || []).map(i =>
+                    `<p class="text-xs text-gray-600">${i.qty}x ${i.name}</p>`
+                ).join('');
+
+                // ── ADJUSTED: NON-AVAILABILITY PANEL ─────────────────────────
+                // The admin edits o.items directly (sets qty to 0 for unavailable items).
+                // o.originalItems holds what the customer originally requested.
+                // We compare them and show the panel whenever anything differs.
+                let adjustmentHtml = '';
+
+                const originalItems = o.originalItems || [];
+                const currentItems  = o.items || [];
+
+                if (originalItems.length > 0 && currentItems.length > 0) {
+                    // Build lookup maps keyed by item id (fallback: name)
+                    const origMap = {};
+                    originalItems.forEach(i => { origMap[i.id || i.name] = i; });
+                    const currMap = {};
+                    currentItems.forEach(i => { currMap[i.id || i.name] = i; });
+
+                    // Detect any change: qty differs, item is 0, or new items added
+                    let hasChange = false;
+                    originalItems.forEach(oi => {
+                        const key = oi.id || oi.name;
+                        const cur = currMap[key];
+                        if (!cur || parseInt(cur.qty) !== parseInt(oi.qty)) hasChange = true;
+                    });
+                    currentItems.forEach(ci => {
+                        if (!origMap[ci.id || ci.name]) hasChange = true;
+                    });
+
+                    if (hasChange) {
+                        // Left column — YOUR REQUEST (original quantities)
+                        const requestRows = originalItems.map(oi => {
+                            const key = oi.id || oi.name;
+                            const cur = currMap[key];
+                            const curQty = cur ? parseInt(cur.qty) : 0;
+                            const reduced = curQty < parseInt(oi.qty);
+                            return `<div class="flex items-center gap-1 mb-1">
+                                <span class="text-xs ${reduced ? 'text-gray-400 line-through' : 'text-gray-700'} leading-5">${oi.qty}x ${oi.name}</span>
+                            </div>`;
+                        }).join('');
+
+                        // Right column — ACTUAL DELIVERY (current qty after admin edit)
+                        const shownKeys = new Set();
+                        let actualRows = originalItems.map(oi => {
+                            const key = oi.id || oi.name;
+                            shownKeys.add(key);
+                            const cur = currMap[key];
+                            const curQty = cur ? parseInt(cur.qty) : 0;
+                            const origQty = parseInt(oi.qty);
+                            const isZero    = curQty === 0;
+                            const isReduced = !isZero && curQty < origQty;
+                            const isSame    = curQty === origQty;
+                            const color     = isZero ? 'text-red-500' : isReduced ? 'text-orange-500' : 'text-green-700';
+                            const strike    = isZero ? 'line-through opacity-60' : '';
+                            const icon      = isZero ? '✗' : isReduced ? '↓' : '✓';
+                            const iconColor = isZero ? 'text-red-400' : isReduced ? 'text-orange-400' : 'text-green-500';
+                            return `<div class="flex items-center gap-1 mb-1">
+                                <span class="text-xs ${iconColor} font-bold w-3 shrink-0">${icon}</span>
+                                <span class="text-xs font-bold ${color} ${strike} leading-5">${curQty}x ${oi.name}</span>
+                            </div>`;
+                        }).join('');
+                        // Any extra items in current not in original (admin added something)
+                        currentItems.forEach(ci => {
+                            const key = ci.id || ci.name;
+                            if (!shownKeys.has(key)) {
+                                actualRows += `<div class="flex items-center gap-1 mb-1">
+                                    <span class="text-xs text-green-500 font-bold w-3 shrink-0">+</span>
+                                    <span class="text-xs font-bold text-green-700 leading-5">${ci.qty}x ${ci.name}</span>
+                                </div>`;
+                            }
+                        });
+
+                        adjustmentHtml = `
+                            <div class="mt-3 rounded-2xl border border-orange-200 bg-orange-50 p-4">
+                                <p class="text-[10px] font-bold text-orange-600 uppercase tracking-widest mb-3 flex items-center gap-1">
+                                    <i class="fas fa-exclamation-triangle"></i>&nbsp;Adjusted: Non-Availability
+                                </p>
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <p class="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-2">Your Request</p>
+                                        ${requestRows}
+                                    </div>
+                                    <div>
+                                        <p class="text-[9px] font-bold text-green-600 uppercase tracking-widest mb-2">Actual Delivery</p>
+                                        ${actualRows}
+                                    </div>
+                                </div>
+                                <p class="text-[9px] text-gray-400 mt-3 leading-4">
+                                    <i class="fas fa-info-circle mr-1"></i>Some items were unavailable. Your bill reflects actual delivered quantities.
+                                </p>
+                            </div>`;
+                    }
+                }
+
+                // ── DELIVERY TRACKING ─────────────────────────────────────────
+                // Fixed: uses https Google Maps + window.open for tel: (works in WhatsApp WebView)
+                let trackingHtml = '';
+                if (o.deliveryName && o.deliveryPhone) {
+                    let mapUrl = '';
+                    if (o.deliveryLat && o.deliveryLng) {
+                        mapUrl = `https://www.google.com/maps?q=${o.deliveryLat},${o.deliveryLng}`;
+                    } else if (o.trackingUrl) {
+                        mapUrl = o.trackingUrl;
+                    }
+                    const safePhone = String(o.deliveryPhone).replace(/[^0-9+]/g, '');
+                    trackingHtml = `
+                        <div class="mt-4 p-4 bg-gray-50 rounded-2xl border border-gray-200">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-10 h-10 bg-green-600 rounded-xl flex items-center justify-center text-white">
+                                        <i class="fas fa-motorcycle text-sm"></i>
+                                    </div>
+                                    <div>
+                                        <p class="text-xs text-gray-500">Delivery Partner</p>
+                                        <p class="text-sm font-bold">${o.deliveryName}</p>
+                                    </div>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    ${mapUrl ? `<button onclick="window.open('${mapUrl}','_blank')" class="map-link" style="border:none;cursor:pointer;" title="Track on map"><i class="fas fa-map-marker-alt"></i></button>` : ''}
+                                    <button onclick="window.open('tel:${safePhone}')" class="w-10 h-10 bg-white rounded-full flex items-center justify-center text-green-600 border border-gray-200 active:bg-green-50 transition" style="cursor:pointer;" title="Call ${safePhone}">
+                                        <i class="fas fa-phone-alt"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>`;
+                }
+                
+                // Action buttons
+                const repeatBtn = `<button onclick="window.repeatOrder('${id}')" class="text-xs font-bold text-green-600 bg-green-50 px-3 py-1.5 rounded-full hover:bg-green-100 transition"><i class="fas fa-redo-alt mr-1"></i> Repeat</button>`;
+                const editBtn = o.status === 'PLACED' ? 
+                    `<button onclick="window.editOrder('${id}')" class="text-xs font-bold text-blue-600 border border-blue-100 px-3 py-1.5 rounded-full hover:bg-blue-50 transition"><i class="fas fa-edit mr-1"></i> Edit</button>` : '';
+                const complaintBtn = o.status === 'DELIVERED' ?
+                    `<button onclick="window.openComplaintModal('${id}', '${(o.customerName||'').replace(/'/g,'')}', '${(o.address||'').replace(/'/g,'').substring(0,60)}')" class="text-xs font-bold text-red-500 bg-red-50 px-3 py-1.5 rounded-full hover:bg-red-100 transition border border-red-100"><i class="fas fa-exclamation-circle mr-1"></i> Complaint</button>` : '';
+                
+                return `
+                    <div class="modern-card p-6">
+                        <div class="flex justify-between items-start mb-3">
+                            <div>
+                                <span class="text-[10px] text-gray-400">#${id.slice(-6)}</span>
+                                <p class="text-xs text-gray-500">Ordered: ${orderDate}</p>
+                                <p class="text-xs text-green-600 font-bold">Delivery: ${deliveryDate}</p>
+                                <h4 class="font-bold text-xl mt-1">Box ${o.totalAmount}</h4>
+                            </div>
+                            <div class="text-right">
+                                <span class="status-badge ${statusClass}">${o.status.replace(/_/g, ' ')}</span>
+                                <div class="flex gap-2 mt-2">
+                                    ${editBtn}
+                                    ${repeatBtn}
+                                    ${complaintBtn}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-center gap-2 text-gray-500 mb-3">
+                            <i class="fas fa-map-pin text-xs"></i>
+                            <p class="text-sm line-clamp-1">${o.address}</p>
+                        </div>
+                        
+                        ${adjustmentHtml ? adjustmentHtml : `<div class="mb-3 pl-6 border-l-2 border-gray-200">${itemsHtml}</div>`}
+                        
+                        <!-- Delivery tracking with map link -->
+                        ${trackingHtml}
+                    </div>`;
+            }).join('');
+        });
+    }
+
+    // ── HOLIDAY HELPERS ────────────────────────────────────────────────────
+
+    // Returns holiday name if the given YYYY-MM-DD date is a holiday, else null
+    window.getHolidayName = (dateStr) => {
+        if (!holidaysData) return null;
+        // holidaysData can be object keyed by push-id with {date, name} or keyed by date string
+        for (const key of Object.keys(holidaysData)) {
+            const h = holidaysData[key];
+            // Support {date:'2025-03-10', name:'Holi'} or {'2025-03-10': 'Holi'}
+            const hDate = (typeof h === 'object' && h !== null) ? (h.date || key) : key;
+            const hName = (typeof h === 'object' && h !== null) ? (h.name || h.title || key) : h;
+            if (hDate === dateStr) return hName || 'Holiday';
+        }
+        return null;
+    };
+
+    // Real-time date validation when user picks a date
+    window.validateDeliveryDate = (dateStr) => {
+        const warningDiv = document.getElementById('dateWarning');
+        const warningMsg = document.getElementById('dateWarningMsg');
+        if (!dateStr) { warningDiv.classList.add('hidden'); return; }
+
+        const d = new Date(dateStr + 'T00:00:00');
+        if (d.getDay() === 0) {
+            warningMsg.innerText = 'Sunday — Farm is closed every Sunday. Please pick another date.';
+            warningDiv.classList.remove('hidden');
+            return;
+        }
+        const hName = window.getHolidayName(dateStr);
+        if (hName) {
+            warningMsg.innerText = `${hName} — Farm closed on this holiday. Please pick another date.`;
+            warningDiv.classList.remove('hidden');
+            return;
+        }
+        warningDiv.classList.add('hidden');
+    };
+
+    // Show upcoming holidays in next 3 days on home screen
+    function updateUpcomingHolidayBanner() {
+        const banner = document.getElementById('upcomingHolidayBanner');
+        const list   = document.getElementById('upcomingHolidayList');
+        if (!banner || !list) return;
+
+        const today = new Date(); today.setHours(0,0,0,0);
+        const upcoming = [];
+
+        // Check next 3 days for Sundays
+        for (let i = 1; i <= 3; i++) {
+            const d = new Date(today); d.setDate(today.getDate() + i);
+            if (d.getDay() === 0) {
+                const label = i === 1 ? 'Tomorrow' : `In ${i} days`;
+                upcoming.push({ label, name: 'Sunday — Farm Closed', dateStr: d.toLocaleDateString('en-IN', {day:'numeric', month:'short'}) });
+            }
+        }
+
+        // Check next 3 days for admin holidays
+        if (holidaysData) {
+            for (let i = 1; i <= 3; i++) {
+                const d = new Date(today); d.setDate(today.getDate() + i);
+                const yyyy = d.getFullYear();
+                const mm   = String(d.getMonth()+1).padStart(2,'0');
+                const dd   = String(d.getDate()).padStart(2,'0');
+                const ds   = `${yyyy}-${mm}-${dd}`;
+                const hName = window.getHolidayName(ds);
+                if (hName) {
+                    const label = i === 1 ? 'Tomorrow' : `In ${i} days`;
+                    const alreadySunday = upcoming.find(u => u.dateStr === d.toLocaleDateString('en-IN', {day:'numeric', month:'short'}));
+                    if (!alreadySunday) {
+                        upcoming.push({ label, name: hName, dateStr: d.toLocaleDateString('en-IN', {day:'numeric', month:'short'}) });
+                    }
+                }
+            }
+        }
+
+        if (upcoming.length > 0) {
+            list.innerHTML = upcoming.map(u =>
+                `<p class="text-xs font-medium leading-5 text-amber-800">
+                    <span class="font-bold">${u.label} (${u.dateStr}):</span> ${u.name} — No delivery. Please order early.
+                </p>`
+            ).join('');
+            banner.classList.remove('hidden');
+        } else {
+            banner.classList.add('hidden');
+        }
+    }
+
+    // ── PUSH NOTIFICATION SYSTEM ──────────────────────────────────────────────
+
+    const STATUS_MESSAGES = {
+        'ACCEPTED':        { title: '✅ Order Accepted!',           body: 'Your order #{id} has been accepted by the farm. We will start preparing your microgreens soon!', icon: '✅' },
+        'PREPARING':       { title: '🌱 Harvesting Started!',       body: 'Your order #{id} — we are harvesting your fresh microgreens right now!', icon: '🌱' },
+        'READY_FOR_PICKUP':{ title: '📦 Order Ready for Pickup!',   body: 'Your order #{id} is packed and ready. Our delivery partner will collect it shortly.', icon: '📦' },
+        'OUT_FOR_DELIVERY':{ title: '🛵 Out for Delivery!',         body: 'Your order #{id} is on the way! Delivery partner: {deliveryName} ({deliveryPhone}).', icon: '🛵' },
+        'DELIVERED':       { title: '🎉 Order Delivered!',          body: 'Your order #{id} has been delivered. Enjoy your fresh microgreens! Thank you for choosing Oligo.', icon: '🎉' },
+        'CANCELLED':       { title: '❌ Order Cancelled',           body: 'Your order #{id} has been cancelled. Please contact us if you have questions.', icon: '❌' },
+    };
+
+    window.sendOrderStatusNotification = (oid, status, order) => {
+        const tpl = STATUS_MESSAGES[status];
+        if (!tpl) return;
+
+        const shortId = '#' + oid.slice(-6).toUpperCase();
+        const title = tpl.title;
+        let body = tpl.body
+            .replace('{id}', shortId)
+            .replace('{deliveryName}', order.deliveryName || 'Partner')
+            .replace('{deliveryPhone}', order.deliveryPhone || '');
+
+        // 1. In-app status toast (always works when app is open)
+        window.showOrderStatusToast(title, body, status);
+
+        // 2. Android Bridge — works when app is minimized or on another tab
+        try {
+            if (window.AndroidBridge) {
+                window.AndroidBridge.showNotification(title, body);
+            }
+        } catch(e) {
+            console.log('AndroidBridge error:', e);
+        }
+
+        // 2. Write to Firebase pendingNotifications for Sketchware background
+        try {
+            const uid = auth.currentUser ? auth.currentUser.uid : (order.customerUid || null);
+            if (uid) {
+                const notifRef = ref(db, 'pendingNotifications/' + uid + '/' + oid);
+                set(notifRef, {
+                    title: title,
+                    body: body,
+                    status: status,
+                    orderId: oid,
+                    timestamp: Date.now(),
+                    delivered: false
+                });
+            }
+        } catch(e) {
+            console.log('Firebase write error:', e);
+        }
+
+        // 3. OneSignal push notification (works when app is fully closed)
+        try {
+            const uid = auth.currentUser ? auth.currentUser.uid : (order.customerUid || null);
+            if (uid) {
+                // Get saved OneSignal Player ID for this customer
+
+                const playerIdRef = ref(db, 'customers/' + uid + '/oneSignalId');
+                // We use a simple fetch to OneSignal REST API
+                const savedId = window._oneSignalPlayerId || null;
+                if (savedId) {
+                    fetch('https://onesignal.com/api/v1/notifications', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': 'Basic os_v2_app_1e0a37ad-9f1d-4e25-a21d-ec03fe5799bb'
+                        },
+                        body: JSON.stringify({
+                            app_id: '1e0a37ad-9f1d-4e25-a21d-ec03fe5799bb',
+                            include_player_ids: [savedId],
+                            headings: { en: title },
+                            contents: { en: body },
+                            android_channel_id: 'oligo_orders'
+                        })
+                    }).catch(e => console.log('OneSignal send error:', e));
+                }
+            }
+        } catch(e) {
+            console.log('OneSignal notification error:', e);
+        }
+
+        // 4. Web Push notification (works when browser tab is in background)
+        if ('Notification' in window && Notification.permission === 'granted') {
+            try {
+                if (navigator.serviceWorker && navigator.serviceWorker.controller) {
+                    navigator.serviceWorker.ready.then(reg => {
+                        reg.showNotification(title, {
+                            body: body,
+                            icon: '/favicon.ico',
+                            badge: '/favicon.ico',
+                            tag: 'order-' + oid,
+                            renotify: true,
+                            vibrate: [200, 100, 200],
+                            data: { url: window.location.href, orderId: oid }
+                        });
+                    });
+                } else {
+                    new Notification(title, { body, icon: '/favicon.ico', tag: 'order-' + oid, vibrate: [200, 100, 200] });
+                }
+            } catch(e) {
+                console.log('Push notification error:', e);
+            }
+        }
+    };
+
+    // Save OneSignal Player ID to Firebase when user logs in
+    window.saveOneSignalId = async (uid) => {
+        try {
+            if (window.OneSignalDeferred) {
+                OneSignalDeferred.push(async function(OneSignal) {
+                    const playerId = await OneSignal.User.PushSubscription.id;
+                    if (playerId) {
+                        window._oneSignalPlayerId = playerId;
+                        set(ref(db, 'customers/' + uid + '/oneSignalId'), playerId);
+                        console.log('OneSignal ID saved:', playerId);
+                    } else {
+                        // Request permission then get ID
+                        await OneSignal.Notifications.requestPermission();
+                        setTimeout(async () => {
+                            const id = await OneSignal.User.PushSubscription.id;
+                            if (id) {
+                                window._oneSignalPlayerId = id;
+                                set(ref(db, 'customers/' + uid + '/oneSignalId'), id);
+                            }
+                        }, 3000);
+                    }
+                });
+            }
+        } catch(e) {
+            console.log('OneSignal save error:', e);
+        }
+    };
+
+    // Rich in-app toast for order status (different from the plain showToast)
+    window.showOrderStatusToast = (title, body, status) => {
+        const colors = {
+            'ACCEPTED':         'border-blue-400 bg-blue-50',
+            'PREPARING':        'border-green-400 bg-green-50',
+            'READY_FOR_PICKUP': 'border-purple-400 bg-purple-50',
+            'OUT_FOR_DELIVERY': 'border-orange-400 bg-orange-50',
+            'DELIVERED':        'border-green-500 bg-green-100',
+            'CANCELLED':        'border-red-400 bg-red-50',
+        };
+        const colorClass = colors[status] || 'border-gray-300 bg-gray-50';
+
+        // Create or reuse dedicated status toast element
+        let el = document.getElementById('orderStatusToast');
+        if (!el) {
+            el = document.createElement('div');
+            el.id = 'orderStatusToast';
+            el.style.cssText = 'position:fixed;top:20px;left:50%;transform:translateX(-50%) translateY(-120px);z-index:10000;width:90%;max-width:380px;border-radius:20px;border-left:5px solid;padding:14px 16px;box-shadow:0 8px 30px rgba(0,0,0,0.15);transition:transform 0.4s cubic-bezier(0.34,1.56,0.64,1),opacity 0.4s;opacity:0;pointer-events:auto;';
+            document.body.appendChild(el);
+        }
+        el.className = colorClass;
+        el.innerHTML = `
+            <div style="display:flex;align-items:flex-start;gap:10px;">
+                <div style="flex:1;min-width:0;">
+                    <p style="font-family:'Poppins',sans-serif;font-size:13px;font-weight:700;color:#111827;margin:0 0 3px;">${title}</p>
+                    <p style="font-family:'Poppins',sans-serif;font-size:11px;color:#374151;margin:0;line-height:1.5;">${body}</p>
+                </div>
+                <button onclick="window.hideOrderStatusToast()" style="background:none;border:none;color:#9ca3af;font-size:18px;cursor:pointer;line-height:1;padding:0 2px;flex-shrink:0;">&times;</button>
+            </div>`;
+
+        // Slide in
+        requestAnimationFrame(() => {
+            el.style.transform = 'translateX(-50%) translateY(0)';
+            el.style.opacity = '1';
+        });
+
+        // Auto dismiss after 6 seconds
+        if (window._statusToastTimer) clearTimeout(window._statusToastTimer);
+        window._statusToastTimer = setTimeout(() => window.hideOrderStatusToast(), 6000);
+    };
+
+    window.hideOrderStatusToast = () => {
+        const el = document.getElementById('orderStatusToast');
+        if (el) { el.style.transform = 'translateX(-50%) translateY(-120px)'; el.style.opacity = '0'; }
+    };
+
+    // Request browser notification permission
+    window.requestNotifPermission = async () => {
+        document.getElementById('notifPermBanner').classList.add('hidden');
+        if (!('Notification' in window)) return;
+        const permission = await Notification.requestPermission();
+        if (permission === 'granted') {
+            window.showToast('🔔 Notifications enabled! You will get order alerts.');
+            // Register service worker for background notifications
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.register('#', { scope: '/' }).catch(() => {});
+            }
+        } else {
+            window.showToast('Notifications blocked. Enable in browser settings to get order alerts.', true);
+        }
+    };
+
+    // Show the permission banner after login if not yet decided
+    function checkNotifPermission() {
+        if (!('Notification' in window)) return;
+        if (Notification.permission === 'default') {
+            setTimeout(() => {
+                document.getElementById('notifPermBanner').classList.remove('hidden');
+            }, 2500);
+        }
+    }
+
+    window.logout = () => signOut(auth);
+
+    // Login handler
+    document.getElementById('loginForm').onsubmit = async (e) => { 
+        e.preventDefault(); 
+        const email = document.getElementById('loginEmail').value.trim(); 
+        const pass = document.getElementById('loginPass').value.trim();
+        const btn = document.getElementById('loginSubmitBtn');
+        
+        if(!email || !pass) return window.showToast("Please fill all fields", true);
+        
+        // Check network before trying
+        if (!navigator.onLine) {
+            return window.showToast("No internet connection. Please check your network.", true);
+        }
+        btn.disabled = true;
+        btn.innerText = "Connecting...";
+        // Test Firebase connection first
+        try {
+            await fetch("https://oligo-store-default-rtdb.firebaseio.com/.json?shallow=true", 
+                { method: 'GET', signal: AbortSignal.timeout(5000) });
+        } catch(e) {
+            // Firebase reachability check failed - still try login
+            console.log("Firebase reachability check:", e.message);
+        }
+        btn.innerText = "Logging in...";
+        
+        // Safety timeout: if auth state doesn't fire within 30 seconds, reset button
+        const loginTimeout = setTimeout(() => {
+            if (btn.disabled) {
+                btn.disabled = false;
+                btn.innerText = "Login";
+                window.showToast("Login taking long. Check internet & try again.", true);
+            }
+        }, 30000);
+        
+        // Retry login up to 3 times on network error
+        let loginAttempt = 0;
+        const tryLogin = async () => {
+            loginAttempt++;
+            try {
+                const userCredential = await signInWithEmailAndPassword(auth, email, pass);
+                clearTimeout(loginTimeout);
+                if (userCredential.user) {
+                    appInitialized = true;
+                    document.getElementById('authSection').classList.add('hidden'); 
+                    document.getElementById('mainApp').classList.remove('hidden');
+                    fetchUser(userCredential.user.uid); 
+                    fetchProducers(); 
+                    fetchOrders(userCredential.user.uid);
+                    onValue(ref(db, 'settings/holidays'), (snap) => { holidaysData = snap.val() || {}; updateUpcomingHolidayBanner(); });
+                    updateBadge(); 
+                    window.navTo('viewHome');
+                    checkNotifPermission();
+                    window.saveOneSignalId(userCredential.user.uid);
+                    btn.disabled = false;
+                    btn.innerText = "Login";
+                }
+            } catch (err) {
+                // Retry on network errors up to 3 times
+                if (err.code === 'auth/network-request-failed' && loginAttempt < 3) {
+                    btn.innerText = "Retrying... (" + loginAttempt + "/3)";
+                    setTimeout(tryLogin, 3000);
+                } else {
+                    clearTimeout(loginTimeout);
+                    window.showToast(getFriendlyErrorMessage(err), true);
+                    btn.disabled = false;
+                    btn.innerText = "Login";
+                }
+            }
+        };
+        tryLogin();
+    };
+
+    // Register handler
+    document.getElementById('registerForm').onsubmit = async (e) => {
+        e.preventDefault(); 
+        const email = document.getElementById('regEmail').value.trim(); 
+        const pass = document.getElementById('regPass').value.trim(); 
+        const name = document.getElementById('regName').value.trim(); 
+        const phone = document.getElementById('regPhone').value.trim();
+        const btn = document.getElementById('registerSubmitBtn');
+        
+        if(!name || !email || !phone || !pass) return window.showToast("Please fill all fields", true);
+        if(pass.length < 6) return window.showToast("Password too short", true);
+        
+        btn.disabled = true;
+        btn.innerText = "Creating account...";
+        
+        const regTimeout = setTimeout(() => {
+            if (btn.disabled) {
+                btn.disabled = false;
+                btn.innerText = "Register";
+                window.showToast("Registration timed out. Please try again.", true);
+            }
+        }, 8000);
+        
+        try {
+            const res = await createUserWithEmailAndPassword(auth, email, pass);
+            await set(ref(db, 'customers/' + res.user.uid), { 
+                name, email, phone, addresses: {} 
+            });
+            clearTimeout(regTimeout);
+            // Manually trigger navigation
+            appInitialized = true;
+            document.getElementById('authSection').classList.add('hidden'); 
+            document.getElementById('mainApp').classList.remove('hidden');
+            fetchUser(res.user.uid); 
+            fetchProducers(); 
+            fetchOrders(res.user.uid);
+            onValue(ref(db, 'settings/holidays'), (snap) => { holidaysData = snap.val() || {}; updateUpcomingHolidayBanner(); });
+            updateBadge(); 
+            window.navTo('viewHome');
+            btn.disabled = false;
+            btn.innerText = "Register";
+        } catch (err) { 
+            clearTimeout(regTimeout);
+            window.showToast(getFriendlyErrorMessage(err), true);
+            btn.disabled = false;
+            btn.innerText = "Register";
+        }
+    };
+
+    // Address search
+    let searchTimeout;
+    window.addressSearch = (input) => {
+        clearTimeout(searchTimeout); 
+        const query = input.value.trim(); 
+        const list = document.getElementById('addrSearchList');
+        
+        if(query.length < 3) { 
+            list.innerHTML = ''; 
+            list.classList.add('hidden'); 
+            return; 
+        }
+        
+        searchTimeout = setTimeout(async () => {
+            try {
+                const url = `https://photon.komoot.io/api/?q=${encodeURIComponent(query)}&limit=10`;
+                const response = await fetch(url); 
+                const data = await response.json();
+                
+                if(data.features?.length > 0) {
+                    list.innerHTML = data.features.map(feat => {
+                        const p = feat.properties; 
+                        const name = p.name || p.street || 'Location'; 
+                        const addr = [p.street, p.district, p.city, p.state].filter(Boolean).join(', ');
+                        return `<div class="p-3 hover:bg-green-50 cursor-pointer border-b" onclick="window.applyAddressResult('${name}', '${addr}')">
+                            <p class="font-bold text-sm">${name}</p>
+                            <p class="text-xs text-gray-500">${addr}</p>
+                        </div>`;
+                    }).join(''); 
+                    list.classList.remove('hidden');
+                }
+            } catch(e) { 
+                console.error("Search failed", e); 
+            }
+        }, 400);
+    };
+    
+    window.applyAddressResult = (name, addr) => { 
+        document.getElementById('newFullAddr').value = name + (addr ? ', ' + addr : ''); 
+        document.getElementById('addrSearchList').classList.add('hidden'); 
+    };
+    
+    // Hide search on click outside
+    document.addEventListener('click', (e) => { 
+        if(!e.target.closest('.relative')) { 
+            document.getElementById('addrSearchList')?.classList.add('hidden'); 
+        } 
+    });
+
+    // ══════════════════════════════════════════════════
+    // FARM FEED — Customer App Logic
+    // ══════════════════════════════════════════════════
+    window.loadFarmFeed = function() {
+        const container = document.getElementById('farmFeedContainer');
+        if (!container) return;
+        container.innerHTML = '<div class="text-center py-12 text-gray-400"><div class="spinner" style="margin:0 auto 12px;"></div><p class="text-sm">Loading farm updates...</p></div>';
+
+        // Load posts from all farm producers
+        db.ref('farmGallery').once('value', function(snap) {
+            const allPosts = [];
+            snap.forEach(function(farmSnap) {
+                farmSnap.forEach(function(postSnap) {
+                    allPosts.push({ key: postSnap.key, farmId: farmSnap.key, ...postSnap.val() });
+                });
+            });
+
+            // Sort newest first
+            allPosts.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+
+            if (allPosts.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-16 text-gray-400">
+                        <i class="fas fa-seedling text-5xl mb-4 block text-green-100"></i>
+                        <p class="font-bold text-gray-500">No farm updates yet</p>
+                        <p class="text-xs mt-2 text-gray-400">Check back soon — your farm will post photos &amp; videos here.</p>
+                    </div>`;
+                return;
+            }
+
+            container.innerHTML = allPosts.map(post => {
+                const timeAgo = (() => {
+                    if (!post.postedAt && !post.timestamp) return '';
+                    const diff = Date.now() - (post.timestamp || new Date(post.postedAt).getTime());
+                    const mins = Math.floor(diff / 60000);
+                    const hours = Math.floor(diff / 3600000);
+                    const days = Math.floor(diff / 86400000);
+                    if (mins < 1) return 'Just now';
+                    if (mins < 60) return mins + 'm ago';
+                    if (hours < 24) return hours + 'h ago';
+                    return days + 'd ago';
+                })();
+
+                let mediaHtml = '';
+                if (post.type === 'photo' && post.imageData) {
+                    mediaHtml = `<img src="${post.imageData}" class="w-full rounded-2xl mb-3" style="max-height:320px;object-fit:cover;" loading="lazy">`;
+                } else if (post.type === 'video' && post.videoUrl) {
+                    const ytMatch = post.videoUrl.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]+)/);
+                    if (ytMatch) {
+                        mediaHtml = `<div class="rounded-2xl overflow-hidden mb-3" style="position:relative;padding-bottom:56.25%;height:0;"><iframe style="position:absolute;top:0;left:0;width:100%;height:100%;" src="https://www.youtube.com/embed/${ytMatch[1]}" frameborder="0" allowfullscreen></iframe></div>`;
+                    } else {
+                        mediaHtml = `<div class="bg-gray-900 rounded-2xl mb-3 p-6 text-center"><i class="fas fa-play-circle text-5xl text-green-400 mb-2 block"></i><a href="${post.videoUrl}" target="_blank" class="text-green-400 text-xs underline break-all">Watch Video</a></div>`;
+                    }
+                }
+
+                return `
+                    <div class="modern-card p-5 fade-in">
+                        <div class="flex items-center gap-3 mb-3">
+                            <div class="w-9 h-9 bg-green-500 rounded-2xl flex items-center justify-center flex-shrink-0 shadow-sm shadow-green-100">
+                                <i class="fas fa-seedling text-white text-sm"></i>
+                            </div>
+                            <div>
+                                <p class="font-bold text-sm text-gray-900">${post.farmName || 'Oligo Farm'}</p>
+                                <p class="text-[10px] text-gray-400">${timeAgo}</p>
+                            </div>
+                            ${post.type === 'video' ? '<span class="ml-auto text-[10px] bg-purple-50 text-purple-600 font-bold px-2 py-1 rounded-full"><i class="fas fa-play-circle mr-1"></i>Video</span>' : '<span class="ml-auto text-[10px] bg-green-50 text-green-600 font-bold px-2 py-1 rounded-full"><i class="fas fa-camera mr-1"></i>Photo</span>'}
+                        </div>
+                        ${mediaHtml}
+                        ${post.caption ? `<p class="text-sm text-gray-700 leading-relaxed">${post.caption}</p>` : ''}
+                    </div>`;
+            }).join('');
+        }, function(err) {
+            container.innerHTML = '<div class="text-center py-8 text-red-400"><i class="fas fa-exclamation-circle text-2xl mb-2 block"></i><p class="text-sm">Could not load farm updates. Check your connection.</p></div>';
+        });
+    };
+
+    // Force hide loader on error
+    window.addEventListener('error', function() {
+        document.getElementById('appLoader').style.display = 'none';
+        document.getElementById('authSection').classList.remove('hidden');
+    });
+</script>
+
+<!-- Final fallback — only shows login if Firebase never resolved (true network failure) -->
+<script>
+    setTimeout(function() {
+        if (window._authResolved) return; // Firebase already handled it — skip
+        var loader = document.getElementById('appLoader');
+        if (loader && loader.style.display !== 'none') {
+            loader.style.display = 'none';
+            // Only show auth if mainApp is not already visible (user not logged in)
+            var mainApp = document.getElementById('mainApp');
+            if (!mainApp || mainApp.classList.contains('hidden')) {
+                document.getElementById('authSection').classList.remove('hidden');
+                document.getElementById('authSection').classList.add('flex');
+            }
+        }
+    }, 8000); // 8s — last resort for truly dead connections
+</script>
+
+<style>
+    /* Search results styling */
+    .search-results { position: absolute; background: white; border: 1px solid #e5e7eb; border-radius: 16px; margin-top: 4px; max-height: 200px; overflow-y: auto; width: 100%; z-index: 1000; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+    .search-item { padding: 12px; cursor: pointer; border-bottom: 1px solid #f3f4f6; }
+    .search-item:hover { background: #f0fdf4; }
+    .line-clamp-1 { display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; }
+    /* Map link hover effect */
+    .map-link { transition: all 0.2s; }
+    .map-link:hover { transform: scale(1.1); background: #dbeafe !important; }
+    /* Responsive adjustments */
+    @media (max-width: 640px) {
+        .modern-card { padding: 16px; }
+        .text-2xl { font-size: 1.5rem; }
+    }
+</style>
+<script>
+// ── INLINE SERVICE WORKER (for background push notifications) ─────────────────
+// We create a blob service worker so no separate file is needed
+const SW_CODE = `
+self.addEventListener('push', function(event) {
+    const data = event.data ? event.data.json() : {};
+    const title = data.title || 'Oligo Order Update';
+    const options = {
+        body: data.body || 'Your order status has changed.',
+        icon: data.icon || '/favicon.ico',
+        badge: '/favicon.ico',
+        tag: data.tag || 'oligo-order',
+        renotify: true,
+        vibrate: [200, 100, 200, 100, 200],
+        data: { url: data.url || '/' }
+    };
+    event.waitUntil(self.registration.showNotification(title, options));
+});
+
+self.addEventListener('notificationclick', function(event) {
+    event.notification.close();
+    const url = event.notification.data && event.notification.data.url ? event.notification.data.url : '/';
+    event.waitUntil(clients.matchAll({ type: 'window', includeUncontrolled: true }).then(function(clientList) {
+        for (var i = 0; i < clientList.length; i++) {
+            var client = clientList[i];
+            if (client.url === url && 'focus' in client) return client.focus();
+        }
+        if (clients.openWindow) return clients.openWindow(url);
+    }));
+});
+
+self.addEventListener('install', function(event) { self.skipWaiting(); });
+self.addEventListener('activate', function(event) { event.waitUntil(clients.claim()); });
+`;
+
+// Register blob service worker for background notifications
+if ('serviceWorker' in navigator) {
+    const blob = new Blob([SW_CODE], { type: 'application/javascript' });
+    const swUrl = URL.createObjectURL(blob);
+    navigator.serviceWorker.register(swUrl, { scope: '/' })
+        .then(reg => {
+            console.log('Oligo SW registered for push notifications');
+            // Store registration globally for use by notification sender
+            window._swRegistration = reg;
+        })
+        .catch(err => console.log('SW registration failed (normal for file:// URLs):', err));
+}
+</script>
+
+    <!-- COMPLAINT MODAL -->
+    <div id="complaintModal" class="fixed inset-0 bg-black bg-opacity-60 hidden flex items-center justify-center z-50 backdrop-blur-sm p-4">
+        <div class="bg-white rounded-[28px] w-full max-w-sm shadow-2xl overflow-hidden">
+            <div class="bg-red-500 p-5 text-white">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <h3 class="font-bold text-lg">Report a Complaint</h3>
+                        <p class="text-xs text-red-100 mt-0.5">Help us improve your experience</p>
+                    </div>
+                    <button onclick="window.closeComplaintModal()" class="w-8 h-8 rounded-full bg-white bg-opacity-20 flex items-center justify-center text-white">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            </div>
+            <input type="hidden" id="complaintOrderId">
+            <div class="p-5 space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Select Issue Type</label>
+                    <div id="complaintTypeOptions" class="space-y-2 max-h-52 overflow-y-auto pr-1"></div>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Additional Note (optional)</label>
+                    <textarea id="complaintNote" rows="2" placeholder="Describe the issue in more detail..." class="w-full border p-3 rounded-xl bg-gray-50 outline-none focus:ring-2 focus:ring-red-300 text-sm resize-none"></textarea>
+                </div>
+                <button onclick="window.submitComplaint()" class="w-full bg-red-500 text-white py-3 rounded-2xl font-bold text-sm shadow-md active:scale-95 transition">
+                    <i class="fas fa-paper-plane mr-2"></i> Submit Complaint
+                </button>
+            </div>
+        </div>
+    </div>
+
+<script>
+    // ======================================================
+    // COMPLAINT SYSTEM - Customer Side (FIXED)
+    // ======================================================
+
+    window.openComplaintModal = function(orderId, customerName, address) {
+        document.getElementById('complaintOrderId').value = orderId;
+        document.getElementById('complaintNote').value = '';
+        document.getElementById('complaintModal').classList.remove('hidden');
+
+        // Load complaint types from Firebase
+        const typeOptions = document.getElementById('complaintTypeOptions');
+        typeOptions.innerHTML = '<p class="text-xs text-gray-400 text-center py-2">Loading...</p>';
+
+        onValue(ref(db, 'settings/complaintTypes'), (snap) => {
+            const types = snap.val() || {};
+            typeOptions.innerHTML = '';
+            if (Object.keys(types).length === 0) {
+                typeOptions.innerHTML = '<p class="text-xs text-gray-400 text-center">No complaint types configured.</p>';
+                return;
+            }
+            Object.entries(types).forEach(([id, t]) => {
+                typeOptions.innerHTML += `
+                    <label class="flex items-center gap-3 bg-gray-50 p-3 rounded-xl border border-gray-100 cursor-pointer hover:bg-red-50 hover:border-red-200 transition">
+                        <input type="radio" name="complaintType" value="${t.name}" class="w-4 h-4 text-red-500 accent-red-500">
+                        <span class="text-sm text-gray-700">${t.name}</span>
+                    </label>`;
+            });
+        }, { onlyOnce: true });
+    };
+
+    window.closeComplaintModal = function() {
+        document.getElementById('complaintModal').classList.add('hidden');
+    };
+
+    window.submitComplaint = function() {
+        const selected = document.querySelector('input[name="complaintType"]:checked');
+        if (!selected) return window.showToast('Please select a complaint type', true);
+
+        const orderId = document.getElementById('complaintOrderId').value;
+        const note    = document.getElementById('complaintNote').value.trim();
+        const order   = allOrdersData ? allOrdersData[orderId] : null;
+
+        // Extract location from address (format: "JointName - Location: FullAddress")
+        let location = '—';
+        if (order && order.address) {
+            const parts = order.address.split(' - ');
+            if (parts.length >= 2) {
+                const locPart = parts[1].split(':')[0].trim();
+                location = locPart || parts[0].trim();
+            } else {
+                location = order.address.substring(0, 40);
+            }
+        }
+
+        const complaintData = {
+            orderId:       orderId,
+            customerUid:   auth.currentUser ? auth.currentUser.uid : '',
+            customerName:  userLocalData ? (userLocalData.name || 'Unknown') : 'Unknown',
+            customerPhone: userLocalData ? (userLocalData.phone || '') : '',
+            address:       order ? (order.address || '') : '',
+            location:      location,
+            complaintType: selected.value,
+            note:          note,
+            status:        'Open',
+            timestamp:     serverTimestamp()
+        };
+
+        push(ref(db, 'customer_complaints'), complaintData).then(() => {
+            window.closeComplaintModal();
+            window.showToast('Complaint submitted. We will look into it!');
+        }).catch(() => {
+            window.showToast('Failed to submit. Please try again.', true);
+        });
+    };
+
+// ── MY DESK (FIXED: uses auth.currentUser directly, added safety checks) ──
+var _myComplaintsAll = [];
+
+window.loadMyComplaints = function() {
+    // CRITICAL FIX: Use auth.currentUser instead of relying solely on window._loggedUid
+    const currentUser = auth.currentUser;
+    if (!currentUser) {
+        console.warn("loadMyComplaints: No user logged in");
+        var container = document.getElementById('myComplaintsList');
+        if (container) container.innerHTML = '<p class="text-center text-red-400 py-6 text-sm">You must be logged in to view complaints.</p>';
+        return;
+    }
+    
+    const uid = currentUser.uid;
+    // Update global variable as well for other parts
+    window._loggedUid = uid;
+    
+    var container = document.getElementById('myComplaintsList');
+    if (!container) return;
+    
+    container.innerHTML = '<p class="text-center text-gray-300 py-6 text-sm">Loading...</p>';
+    
+    // Safety timeout: if fetch takes > 8 seconds, show error
+    const timeoutId = setTimeout(() => {
+        if (container && container.innerHTML === '<p class="text-center text-gray-300 py-6 text-sm">Loading...</p>') {
+            container.innerHTML = '<p class="text-center text-red-400 py-6 text-sm">Failed to load complaints. Please check your connection.</p>';
+        }
+    }, 8000);
+    
+    firebase.database().ref('customer_complaints')
+        .orderByChild('customerUid')
+        .equalTo(uid)
+        .once('value')
+        .then(function(snap) {
+            clearTimeout(timeoutId);
+            var all = snap.val() || {};
+            _myComplaintsAll = Object.keys(all).map(function(k) { 
+                return Object.assign({ _id: k }, all[k]); 
+            }).sort(function(a, b) { 
+                return (b.timestamp || 0) - (a.timestamp || 0); 
+            });
+            window.filterMyComplaints('all');
+        })
+        .catch(function(err) {
+            clearTimeout(timeoutId);
+            console.error("Load complaints error:", err);
+            if (container) container.innerHTML = '<p class="text-center text-red-400 py-6 text-sm">Error loading complaints. ' + err.message + '</p>';
+        });
+};
+
+window.filterMyComplaints = function(filter) {
+    // Update filter button styles
+    ['all','open','resolved'].forEach(function(f) {
+        var btn = document.getElementById('cf-' + f);
+        if (!btn) return;
+        if (f === filter) {
+            btn.classList.add('bg-white','shadow','text-gray-800');
+            btn.classList.remove('text-gray-500');
+        } else {
+            btn.classList.remove('bg-white','shadow','text-gray-800');
+            btn.classList.add('text-gray-500');
+        }
+    });
+
+    var list = filter === 'open'
+        ? _myComplaintsAll.filter(function(c){ return c.status !== 'Resolved'; })
+        : filter === 'resolved'
+            ? _myComplaintsAll.filter(function(c){ return c.status === 'Resolved'; })
+            : _myComplaintsAll;
+
+    var container = document.getElementById('myComplaintsList');
+    if (!container) return;
+    if (list.length === 0) {
+        container.innerHTML = '<p class="text-center text-gray-300 py-6 text-sm">No complaints in this category.</p>';
+        return;
+    }
+
+    container.innerHTML = list.map(function(c) {
+        var dateStr = c.timestamp ? new Date(c.timestamp).toLocaleDateString('en-IN', { day:'numeric', month:'short', year:'numeric' }) : '';
+        var isResolved = c.status === 'Resolved';
+        var statusBadge = isResolved
+            ? '<span class="text-[10px] font-bold text-green-600 bg-green-100 px-2 py-0.5 rounded-full">Resolved</span>'
+            : '<span class="text-[10px] font-bold text-orange-500 bg-orange-100 px-2 py-0.5 rounded-full">Pending</span>';
+
+        var replyBlock = '';
+        if (isResolved && c.actionTaken) {
+            replyBlock = '<div class="mt-3 bg-green-50 border border-green-100 rounded-xl p-3">'
+                + '<p class="text-[10px] font-bold text-green-600 uppercase mb-1"><i class="fas fa-reply mr-1"></i>Team Response</p>'
+                + '<p class="text-xs text-gray-700">' + c.actionTaken + '</p>'
+                + '<p class="text-[10px] text-gray-400 mt-1">— ' + (c.resolvedBy || 'Production Team') + '</p>'
+                + '</div>';
+        } else if (!isResolved) {
+            replyBlock = '<div class="mt-3 bg-orange-50 border border-orange-100 rounded-xl p-3">'
+                + '<p class="text-[10px] text-orange-500 font-medium"><i class="fas fa-clock mr-1"></i>Our team is reviewing your complaint. We\'ll get back to you shortly.</p>'
+                + '</div>';
+        }
+
+        return '<div class="bg-gray-50 rounded-2xl p-4 border border-gray-100">'
+            + '<div class="flex justify-between items-start mb-1">'
+            + '<p class="text-sm font-bold text-gray-800">' + (c.complaintType || '—') + '</p>'
+            + statusBadge
+            + '</div>'
+            + (c.note ? '<p class="text-xs text-gray-400 mb-1 italic">"' + c.note + '"</p>' : '')
+            + '<p class="text-[10px] text-gray-300">' + dateStr + '</p>'
+            + replyBlock
+            + '</div>';
+    }).join('');
+};
+
+</script>
+
+</body>
+</html>
