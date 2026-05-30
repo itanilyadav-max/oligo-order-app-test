@@ -483,14 +483,19 @@ window._authResolved = false;
         db = firebase.database();
         // Speed up auth on slow networks
         auth.useDeviceLanguage();
-        // LOCAL persistence = user stays logged in across browser sessions
-        auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(function(e) {
+        // Use LOCAL persistence on desktop, SESSION on mobile WebView
+        // Android WebView IndexedDB can cause stalls with LOCAL persistence
+        var isMobileWebView = /Android/.test(navigator.userAgent) && !/Chrome/.test(navigator.userAgent);
+        var persistenceLevel = isMobileWebView
+            ? firebase.auth.Auth.Persistence.SESSION
+            : firebase.auth.Auth.Persistence.LOCAL;
+        auth.setPersistence(persistenceLevel).catch(function(e) {
             console.warn('Persistence set failed (session will still work):', e);
         });
         // Keep database connection alive
         db.goOnline();
-        // Enable offline persistence for database
-        try { db.enablePersistence(); } catch(e) {}
+        // Note: enablePersistence() removed — only needed for Firestore, not
+        // Realtime Database. It caused stalls on Android WebView / mobile browsers.
         console.log("Firebase compat initialized — Vodafone ready");
     } catch(e) {
         console.error("Firebase init error:", e);
@@ -1118,26 +1123,26 @@ window._authResolved = false;
                 ).join('');
 
                 // ── ADJUSTED: NON-AVAILABILITY PANEL ─────────────────────────
-                // The admin edits o.items directly (sets qty to 0 for unavailable items).
-                // o.originalItems holds what the customer originally requested.
-                // We compare them and show the panel whenever anything differs.
+                // Two triggers:
+                //   1. o.originalItems exists (customer-app orders — original path)
+                //   2. o.shortfallReason exists (admin adjusted via Log Shortfall)
+                //      Admin writes: items (adjusted), shortfallReason, totalAmount
+                //      In this case show all items: zero-qty = unavailable, >0 = delivered
                 let adjustmentHtml = '';
 
                 const originalItems = o.originalItems || [];
-                const currentItems  = o.items || [];
+                const currentItems  = Array.isArray(o.items) ? o.items : [];
 
+                // ── PATH A: originalItems exist — compare old vs new ──────────
                 if (originalItems.length > 0 && currentItems.length > 0) {
-                    // Build lookup maps keyed by item id (fallback: name)
                     const origMap = {};
                     originalItems.forEach(i => { origMap[i.id || i.name] = i; });
                     const currMap = {};
                     currentItems.forEach(i => { currMap[i.id || i.name] = i; });
 
-                    // Detect any change: qty differs, item is 0, or new items added
                     let hasChange = false;
                     originalItems.forEach(oi => {
-                        const key = oi.id || oi.name;
-                        const cur = currMap[key];
+                        const cur = currMap[oi.id || oi.name];
                         if (!cur || parseInt(cur.qty) !== parseInt(oi.qty)) hasChange = true;
                     });
                     currentItems.forEach(ci => {
@@ -1145,10 +1150,8 @@ window._authResolved = false;
                     });
 
                     if (hasChange) {
-                        // Left column — YOUR REQUEST (original quantities)
                         const requestRows = originalItems.map(oi => {
-                            const key = oi.id || oi.name;
-                            const cur = currMap[key];
+                            const cur = currMap[oi.id || oi.name];
                             const curQty = cur ? parseInt(cur.qty) : 0;
                             const reduced = curQty < parseInt(oi.qty);
                             return `<div class="flex items-center gap-1 mb-1">
@@ -1156,7 +1159,6 @@ window._authResolved = false;
                             </div>`;
                         }).join('');
 
-                        // Right column — ACTUAL DELIVERY (current qty after admin edit)
                         const shownKeys = new Set();
                         let actualRows = originalItems.map(oi => {
                             const key = oi.id || oi.name;
@@ -1166,7 +1168,6 @@ window._authResolved = false;
                             const origQty = parseInt(oi.qty);
                             const isZero    = curQty === 0;
                             const isReduced = !isZero && curQty < origQty;
-                            const isSame    = curQty === origQty;
                             const color     = isZero ? 'text-red-500' : isReduced ? 'text-orange-500' : 'text-green-700';
                             const strike    = isZero ? 'line-through opacity-60' : '';
                             const icon      = isZero ? '✗' : isReduced ? '↓' : '✓';
@@ -1176,7 +1177,6 @@ window._authResolved = false;
                                 <span class="text-xs font-bold ${color} ${strike} leading-5">${curQty}x ${oi.name}</span>
                             </div>`;
                         }).join('');
-                        // Any extra items in current not in original (admin added something)
                         currentItems.forEach(ci => {
                             const key = ci.id || ci.name;
                             if (!shownKeys.has(key)) {
@@ -1207,6 +1207,129 @@ window._authResolved = false;
                                 </p>
                             </div>`;
                     }
+
+                // ── PATH B: Admin used Log Shortfall (shortfallReason set, no originalItems) ──
+                } else if (o.shortfallReason && currentItems.length > 0) {
+                    // Show all items — zero qty = not delivered, >0 = delivered
+                    const hasAnyZero = currentItems.some(i => parseInt(i.qty) === 0);
+                    const hasAnyReduced = currentItems.some(i => parseInt(i.qty) > 0);
+
+                    // Build the single delivery column (what was actually sent)
+                    const deliveryRows = currentItems.map(i => {
+                        const qty = parseInt(i.qty) || 0;
+                        const isZero = qty === 0;
+                        const icon      = isZero ? '✗' : '✓';
+                        const iconColor = isZero ? 'text-red-400' : 'text-green-500';
+                        const color     = isZero ? 'text-red-500 line-through opacity-60' : 'text-green-700';
+                        return `<div class="flex items-center gap-2 mb-1.5">
+                            <span class="text-sm ${iconColor} font-bold w-4 shrink-0">${icon}</span>
+                            <span class="text-xs font-semibold ${color} leading-5">
+                                ${isZero ? i.name : qty + 'x ' + i.name}
+                            </span>
+                            ${isZero ? '<span class="text-[9px] bg-red-100 text-red-500 font-bold px-1.5 py-0.5 rounded-full ml-1">Not Available</span>' : ''}
+                        </div>`;
+                    }).join('');
+
+                    // Reason label map
+                    const reasonLabels = {
+                        'Non-Availability': 'Non-Availability',
+                        'Low Germination': 'Low Germination',
+                        'Slow Growth': 'Slow Growth',
+                        'Harvest Error': 'Harvest Error',
+                        'Pest / Disease': 'Pest / Disease',
+                        'Contamination': 'Contamination',
+                        'Weather / Environment': 'Weather / Environment',
+                        'Over-Order': 'Over-Order'
+                    };
+                    const reasonLabel = reasonLabels[o.shortfallReason] || o.shortfallReason;
+
+                    adjustmentHtml = `
+                        <div class="mt-3 rounded-2xl border border-orange-200 bg-orange-50 overflow-hidden">
+                            <!-- Header bar -->
+                            <div class="flex items-center justify-between px-4 py-3 bg-orange-100 border-b border-orange-200">
+                                <div class="flex items-center gap-2">
+                                    <span class="w-7 h-7 rounded-full bg-orange-500 flex items-center justify-center shrink-0">
+                                        <i class="fas fa-exclamation text-white text-xs"></i>
+                                    </span>
+                                    <div>
+                                        <p class="text-[11px] font-black text-orange-700 uppercase tracking-widest leading-none">Order Adjusted</p>
+                                        <p class="text-[10px] text-orange-500 font-semibold mt-0.5">Non-Availability Notice</p>
+                                    </div>
+                                </div>
+                                <span class="text-[9px] font-black bg-orange-500 text-white px-2.5 py-1 rounded-full uppercase tracking-wide">${reasonLabel}</span>
+                            </div>
+                            <!-- Items list -->
+                            <div class="px-4 pt-3 pb-1">
+                                <p class="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-2.5">What You Will Receive</p>
+                                ${deliveryRows}
+                            </div>
+                            <!-- Footer note -->
+                            <div class="px-4 pb-3 mt-1">
+                                <div class="flex items-start gap-2 bg-white rounded-xl p-2.5 border border-orange-100">
+                                    <i class="fas fa-info-circle text-orange-400 mt-0.5 text-xs shrink-0"></i>
+                                    <p class="text-[9px] text-gray-500 leading-4">
+                                        Some items in your order were unavailable today due to <strong>${reasonLabel}</strong>. 
+                                        Your bill has been updated to reflect only the items being delivered.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>`;
+                }
+
+                // ── PATH C: Substitute given — ALWAYS show if substitutes exist ────
+                // Note: no !adjustmentHtml guard — substitute must show even when
+                // PATH A already built the shortfall panel above.
+                if (o.substitutes && o.substitutes.length > 0) {
+                    const substituteRows = o.substitutes.map(s => {
+                        return `<div class="flex items-center gap-2 mb-2 flex-wrap">
+                            <span class="text-xs text-red-400 line-through font-semibold">${s.originalItem}</span>
+                            <span class="text-xs text-gray-400">→</span>
+                            <span class="text-xs font-bold text-teal-700">${s.substituteQty}x ${s.substituteItem}</span>
+                            <span class="text-[9px] bg-teal-100 text-teal-700 font-bold px-1.5 py-0.5 rounded-full">Substitute</span>
+                        </div>`;
+                    }).join('');
+                    const custNote = o.substituteNote || '';
+                    adjustmentHtml += `
+                        <div class="mt-3 rounded-2xl border border-teal-200 bg-teal-50 overflow-hidden">
+                            <div class="flex items-center justify-between px-4 py-3 bg-teal-100 border-b border-teal-200">
+                                <div class="flex items-center gap-2">
+                                    <span class="w-7 h-7 rounded-full bg-teal-500 flex items-center justify-center shrink-0">
+                                        <i class="fas fa-sync-alt text-white text-xs"></i>
+                                    </span>
+                                    <div>
+                                        <p class="text-[11px] font-black text-teal-800 uppercase tracking-widest leading-none">Substitute Provided</p>
+                                        <p class="text-[10px] text-teal-600 font-semibold mt-0.5">Replacement sent for unavailable items</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="px-4 pt-3 pb-1">
+                                <p class="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-2.5">What Is Being Sent Instead</p>
+                                ${substituteRows}
+                            </div>
+                            ${custNote ? `<div class="px-4 pb-3 mt-1"><div class="flex items-start gap-2 bg-white rounded-xl p-2.5 border border-teal-100"><i class="fas fa-comment-alt text-teal-400 mt-0.5 text-xs shrink-0"></i><p class="text-[9px] text-gray-600 leading-4">${custNote}</p></div></div>` : ''}
+                        </div>`;
+                }
+
+                // ── PATH D: Accept-as-is shortfall (no substitute) ────────────
+                if (!adjustmentHtml && o.adjustmentNote && o.shortfallSubstituted === false) {
+                    adjustmentHtml = `
+                        <div class="mt-3 rounded-2xl border border-orange-200 bg-orange-50 overflow-hidden">
+                            <div class="flex items-center gap-3 px-4 py-3 bg-orange-100 border-b border-orange-200">
+                                <span class="w-7 h-7 rounded-full bg-orange-500 flex items-center justify-center shrink-0">
+                                    <i class="fas fa-exclamation text-white text-xs"></i>
+                                </span>
+                                <div>
+                                    <p class="text-[11px] font-black text-orange-700 uppercase tracking-widest leading-none">Order Adjusted</p>
+                                    <p class="text-[10px] text-orange-500 font-semibold mt-0.5">Production shortfall — no substitute today</p>
+                                </div>
+                            </div>
+                            <div class="px-4 py-3">
+                                <div class="flex items-start gap-2 bg-white rounded-xl p-2.5 border border-orange-100">
+                                    <i class="fas fa-info-circle text-orange-400 mt-0.5 text-xs shrink-0"></i>
+                                    <p class="text-[9px] text-gray-600 leading-4">${o.adjustmentNote}</p>
+                                </div>
+                            </div>
+                        </div>`;
                 }
 
                 // ── DELIVERY TRACKING ─────────────────────────────────────────
@@ -1590,25 +1713,16 @@ window._authResolved = false;
             return window.showToast("No internet connection. Please check your network.", true);
         }
         btn.disabled = true;
-        btn.innerText = "Connecting...";
-        // Test Firebase connection first
-        try {
-            await fetch("https://oligo-store-default-rtdb.firebaseio.com/.json?shallow=true", 
-                { method: 'GET', signal: AbortSignal.timeout(5000) });
-        } catch(e) {
-            // Firebase reachability check failed - still try login
-            console.log("Firebase reachability check:", e.message);
-        }
         btn.innerText = "Logging in...";
         
-        // Safety timeout: if auth state doesn't fire within 30 seconds, reset button
+        // Safety timeout: reset button if login doesn't complete in 12 seconds
         const loginTimeout = setTimeout(() => {
             if (btn.disabled) {
                 btn.disabled = false;
                 btn.innerText = "Login";
-                window.showToast("Login taking long. Check internet & try again.", true);
+                window.showToast("Login is taking too long. Please check your internet connection and try again.", true);
             }
-        }, 30000);
+        }, 12000);
         
         // Retry login up to 3 times on network error
         let loginAttempt = 0;
